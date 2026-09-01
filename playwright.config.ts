@@ -1,7 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
 /**
- * End-to-end smoke tests against the deployed site, not a local dev server.
+ * End-to-end smoke tests against a served production build.
  *
  * There is deliberately no `webServer` here. A local `next dev` would prove the source
  * builds, which `npm run build` already proves. What is not otherwise proven is that the
@@ -31,10 +31,16 @@ export default defineConfig({
   timeout: 90_000,
   expect: { timeout: 30_000 },
   use: {
-    baseURL: process.env.E2E_BASE_URL || "https://holdfast-genlayer.vercel.app",
+    baseURL: process.env.E2E_BASE_URL || "http://127.0.0.1:3213",
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
     video: "off",
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  webServer: {
+    command: "npm run start -- -p 3213",
+    url: "http://127.0.0.1:3213",
+    reuseExistingServer: !process.env.CI,
+    timeout: 120_000,
+  },
 });

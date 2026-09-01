@@ -11,9 +11,10 @@ Submission record: [`docs/SUBMISSION.md`](docs/SUBMISSION.md)
 
 ## Status
 
-Release candidate surface: the Holdfast contract, fixture archive reader, lifecycle rail, injected
-wallet controls, bond creation/contest/settlement flows, and direct/frontend regression suites are
-wired. Live deployment checks remain environment-bound until a contract address is configured.
+Current status: the Holdfast contract, fixture archive reader, lifecycle rail, injected wallet
+controls, bond creation/contest/settlement flows, direct/frontend regression suites, and served-build
+browser checks are wired. A canonical StudioNet deployment is **NOT PROVEN LIVE** until a finalized
+current-source deployment, source parity, schema parity and re-readable evidence are recorded.
 
 ## Layout
 
@@ -23,7 +24,7 @@ src/app                     Next.js routes
 src/components              interface
 src/lib/genlayer            client plumbing, shared across the three builds
 tests/direct                contract tests, run with pytest on gltest
-tests/e2e                   Playwright, run against the deployed origin
+tests/e2e                   Playwright, run against a served production build (or E2E_BASE_URL)
 ```
 
 ## Verify
@@ -32,8 +33,8 @@ tests/e2e                   Playwright, run against the deployed origin
 npm run verify
 ```
 
-Runs the frontend unit tests, the contract tests, the em dash check, the type check, the
-linter and the production build, in that order.
+Runs frontend tests, Direct Mode, fixture checks, typecheck, lint and the production build.
+Browser checks are run separately with `npm run test:e2e` after a production build.
 
 The repository is self-contained; Direct Mode and the archive corpus live under `tests/` and do
 not require a workspace sibling.
