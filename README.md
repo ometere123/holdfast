@@ -12,7 +12,9 @@ Design system: `../genlayer-prds/design-systems.md`
 
 ## Status
 
-Scaffolded. The contract and the interface are in progress.
+Release candidate surface: the Holdfast contract, fixture archive reader, lifecycle rail, injected
+wallet controls, bond creation/contest/settlement flows, and direct/frontend regression suites are
+wired. Live deployment checks remain environment-bound until a contract address is configured.
 
 ## Layout
 
