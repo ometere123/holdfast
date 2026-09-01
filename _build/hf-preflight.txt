@@ -1,0 +1,32 @@
+CDX_ROW_LIMIT read from the contract: 40
+cdx url  https://web.archive.org/cdx/search/cdx?output=json&fl=timestamp,digest,length&filter=statuscode:200&collapse=digest&from=20260129024608&to=20260831000000&limit=40&url=https://cloud.google.com/terms/
+snap url https://web.archive.org/web/20260129024608id_/https://cloud.google.com/terms/
+
+== CDX ==
+status       200
+bytes        2554
+rows         40
+change_points 40
+saturated    None
+row 0        CdxRow(20260129024608 digest=ORCARP7HGOXUBBYK4LXACZM7GU5ZBMMY warc_length=93239 status=None)
+pin at row 0 yes
+enough       True
+
+== snapshot ==
+status          200
+raw bytes       89652
+content-encoding None
+magic           1f8b
+cdx digest      ORCARP7HGOXUBBYK4LXACZM7GU5ZBMMY
+digest agrees   True
+raw sha256      c30bfa850f63525bf16f708e9ab40b236ff02b1a64057feeee14c6a026f30b31
+encoding        gzip
+decoded bytes   819751
+QUALIFIED       True gate C 5 of 5
+text chars      89605
+verbatim excerpt present True
+
+byte-identical to the fixture captured 2026-08-25: True
+fixture sha256  c30bfa850f63525bf16f708e9ab40b236ff02b1a64057feeee14c6a026f30b31
+{"preflight": "done"}
+EXIT=0

@@ -1,0 +1,595 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   Holdfast: microform archive retrieval.
+
+   Every other system in this set is printed on paper. This one is projected on
+   the lit ground glass of a microform reader, because an archived snapshot is
+   an image of a document that no longer exists in that form.
+
+   Two classes of evidence, and the palette refuses to let them look alike.
+   Anything read from an immutable archived frame is FIXED: full saturation
+   diazo violet, 7.59:1 on the glass, so it may carry body text anywhere.
+   Anything read from the live web is UNFIXED: 3.73:1 on the glass, which
+   fails, and 5.21:1 on the light table, which passes. A live reading is
+   therefore physically unable to be presented with the authority of an
+   archived one, and that fell out of the contrast arithmetic rather than
+   being a house rule.
+   ========================================================================== */
+
+@theme inline {
+  --color-glass: #c9d0d0;
+  --color-gate: #aeb6b6;
+  --color-emulsion: #16191b;
+  --color-diazo: #332b7a;
+  --color-unfixed: #6b6459;
+  --color-lighttable: #edf3f4;
+
+  --font-display: var(--face-zilla), Rockwell, "Bookman Old Style", Georgia, serif;
+  --font-body: var(--face-atkinson), Verdana, "DejaVu Sans", Tahoma, sans-serif;
+  --font-record: var(--face-iosevka), "Cascadia Mono", Consolas, "DejaVu Sans Mono", monospace;
+
+  /* The strip runs horizontally at or above this width and vertically below it. */
+  --breakpoint-strip: 760px;
+}
+
+:root {
+  /* System first release stack: no build time dependency on a font CDN. Each
+     fallback is chosen for the same property the named face was chosen for.
+     Rockwell is a slab. Verdana was drawn for glyph disambiguation, which is
+     why Atkinson Hyperlegible is here in the first place. Cascadia Mono and
+     Consolas are narrow enough to set a 32 character digest without wrapping. */
+  --face-zilla: "Zilla Slab";
+  --face-atkinson: "Atkinson Hyperlegible Next", "Atkinson Hyperlegible";
+  --face-iosevka: "Iosevka Fixed", "Iosevka";
+
+  --glass: #c9d0d0;
+  --gate: #aeb6b6;
+  --emulsion: #16191b;
+  --diazo: #332b7a;
+  --unfixed: #6b6459;
+  --lighttable: #edf3f4;
+
+  /* Frame width 68px, sprocket rail 9px, no radius above 1px. Spacing base 4. */
+  --frame-w: 68px;
+  --frame-h: 44px;
+  --rail-h: 9px;
+
+  --rule: color-mix(in srgb, var(--emulsion) 16%, transparent);
+  --rule-strong: color-mix(in srgb, var(--emulsion) 34%, transparent);
+  --emulsion-72: color-mix(in srgb, var(--emulsion) 72%, var(--glass));
+  --emulsion-55: color-mix(in srgb, var(--emulsion) 55%, var(--glass));
+}
+
+* {
+  border-color: var(--rule);
+}
+
+html {
+  background: var(--glass);
+  color: var(--emulsion);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--glass);
+  color: var(--emulsion);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 26px;
+  font-weight: 400;
+}
+
+/* --------------------------------------------------------------------------
+   Type scale: 11 · 13 · 16 · 20 · 34. Nothing else.
+   -------------------------------------------------------------------------- */
+
+.hf-display {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 34px;
+  line-height: 38px;
+  letter-spacing: -0.005em;
+}
+
+.hf-heading {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 20px;
+  line-height: 26px;
+}
+
+.hf-body {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 26px;
+}
+
+.hf-note {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.hf-record {
+  font-family: var(--font-record);
+  font-weight: 400;
+  font-size: 13px;
+  line-height: 19px;
+  font-variant-numeric: tabular-nums;
+}
+
+.hf-record-sm {
+  font-family: var(--font-record);
+  font-weight: 400;
+  font-size: 11px;
+  line-height: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* A catalogue label. Archival register: lower case, letterspaced, quiet. */
+.hf-label {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 11px;
+  line-height: 14px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--emulsion-72);
+}
+
+.hf-label-ink {
+  color: var(--emulsion);
+}
+
+/* Fixed evidence: read from an immutable archived frame. 7.59:1 on the glass. */
+.hf-diazo {
+  color: var(--diazo);
+}
+
+/* --------------------------------------------------------------------------
+   The light table, and the one place a live reading may be read.
+
+   .hf-unfixed has no unscoped rule on purpose. --unfixed measures 3.73:1 on
+   the glass, which fails body text, and 5.21:1 on the light table, which
+   passes. So the only selector that paints it is nested inside the light
+   table. Used anywhere else the class inherits --emulsion and the value reads
+   as ordinary text, which is a loud mistake rather than a quiet illegible one.
+   -------------------------------------------------------------------------- */
+
+.hf-lighttable {
+  background: var(--lighttable);
+}
+
+.hf-lighttable .hf-unfixed {
+  color: var(--unfixed);
+}
+
+/* --------------------------------------------------------------------------
+   The frame strip.
+
+   Four kinds of cell, and the pair that must never be confusable is
+   "unchanged" and "blank". They differ on five independent axes, any one of
+   which is enough on its own:
+
+     1. interior     unchanged carries an emulsion field; blank carries
+                     nothing at all, so the page ground shows through it
+     2. border       unchanged is solid; blank is dashed
+     3. collapse     unchanged frames fold into a run band; a blank frame is
+                     never collapsed at any width, so it always keeps its own
+                     position and its own frame number
+     4. caption      printed under every cell, never empty, never colour alone
+     5. accessible   name each cell states its kind in words
+
+   A fifth cell kind, "arriving", exists only while a write is in flight. It
+   is solid bordered with a latent diazo wash and carries no frame number,
+   because a capture that has not resolved has no timestamp yet. That keeps it
+   off both axes 1 and 2 relative to a blank frame.
+   -------------------------------------------------------------------------- */
+
+.hf-rail {
+  height: var(--rail-h);
+  background-color: var(--gate);
+  background-image: radial-gradient(
+    circle at 6px calc(var(--rail-h) / 2),
+    var(--glass) 2.2px,
+    transparent 2.4px
+  );
+  background-size: 12px var(--rail-h);
+}
+
+/* Below 760px the rails run down the sides instead of across the top. */
+.hf-rail-v {
+  width: var(--rail-h);
+  background-color: var(--gate);
+  background-image: radial-gradient(
+    circle at calc(var(--rail-h) / 2) 6px,
+    var(--glass) 2.2px,
+    transparent 2.4px
+  );
+  background-size: var(--rail-h) 12px;
+}
+
+.hf-cell {
+  position: relative;
+  display: block;
+  width: var(--frame-w);
+  min-width: var(--frame-w);
+  padding: 0;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.hf-cell-window {
+  position: relative;
+  height: var(--frame-h);
+  border: 1px solid var(--gate);
+  background: var(--glass);
+}
+
+/* The exposed image inside a frame. Absent entirely from a blank frame. */
+.hf-cell-field {
+  position: absolute;
+  inset: 3px;
+  background: var(--emulsion);
+}
+
+/* Baseline: notched. A real corner cut, not a badge. */
+.hf-cell-baseline .hf-cell-window {
+  border-color: var(--emulsion);
+}
+
+.hf-cell-baseline .hf-cell-field {
+  clip-path: polygon(0 34%, 34% 0, 100% 0, 100% 100%, 0 100%);
+}
+
+/* Unchanged: dimmed, because a hundred identical frames are one fact. */
+.hf-cell-unchanged .hf-cell-field {
+  background: var(--emulsion-55);
+}
+
+/* Differs: double ruled in diazo and pulled forward. */
+.hf-cell-differs .hf-cell-window {
+  border-color: var(--diazo);
+  box-shadow:
+    inset 0 0 0 3px var(--glass),
+    inset 0 0 0 4px var(--diazo);
+  height: calc(var(--frame-h) + 8px);
+  margin-top: -8px;
+}
+
+.hf-cell-differs .hf-cell-field {
+  inset: 6px;
+}
+
+/* Blank: dashed outline, empty glass, frame number kept. Nothing was read. */
+.hf-cell-blank .hf-cell-window {
+  border-style: dashed;
+  border-color: var(--gate);
+  background: var(--glass);
+}
+
+/* Arriving: a latent wash and no frame number. Only ever in flight. */
+.hf-cell-arriving .hf-cell-window {
+  background: color-mix(in srgb, var(--diazo) 10%, var(--glass));
+}
+
+.hf-cell[aria-pressed="true"] .hf-cell-window {
+  outline: 2px solid var(--emulsion);
+  outline-offset: 2px;
+}
+
+/* A collapsed run of unchanged frames. Filled like the frames it stands for. */
+.hf-run-band {
+  height: var(--frame-h);
+  border: 1px solid var(--gate);
+  background: var(--glass);
+  position: relative;
+}
+
+.hf-run-band::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  background: var(--emulsion-55);
+}
+
+/* The cursor frame, highlighted while the reel is idle. */
+.hf-cell-cursor .hf-cell-window::after {
+  content: "";
+  position: absolute;
+  left: -1px;
+  right: -1px;
+  bottom: -5px;
+  height: 2px;
+  background: var(--emulsion);
+}
+
+/* --------------------------------------------------------------------------
+   Motion. The reel advances, it does not spin.
+   -------------------------------------------------------------------------- */
+
+.hf-advancing .hf-cell {
+  animation: hf-land 240ms ease-out both;
+  animation-delay: calc(var(--frame-order, 0) * 90ms);
+}
+
+@keyframes hf-land {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.hf-open {
+  animation: hf-open 240ms ease-out both;
+}
+
+@keyframes hf-open {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* The active consensus stage breathes. It never spins, and nothing flashes. */
+.hf-stage-active {
+  animation: hf-breathe 2600ms ease-in-out infinite;
+}
+
+@keyframes hf-breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hf-advancing .hf-cell,
+  .hf-open,
+  .hf-stage-active {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .hf-skip {
+    transition: none;
+  }
+
+  * {
+    scroll-behavior: auto !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Focus, in this system's own ink, never a browser default outline.
+   -------------------------------------------------------------------------- */
+
+:focus-visible {
+  outline: 2px solid var(--emulsion);
+  outline-offset: 2px;
+  border-radius: 1px;
+}
+
+.hf-skip {
+  position: absolute;
+  left: 16px;
+  top: -64px;
+  z-index: 60;
+  background: var(--glass);
+  border: 1px solid var(--emulsion);
+  padding: 10px 16px;
+  transition: top 120ms ease-out;
+}
+
+.hf-skip:focus {
+  top: 16px;
+}
+
+/* --------------------------------------------------------------------------
+   Controls. A rule, a ground, and a label. No gradient, no shadow at rest,
+   no radius above 1px anywhere.
+   -------------------------------------------------------------------------- */
+
+.hf-btn,
+.hf-btn-quiet,
+.hf-btn-diazo {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 11px;
+  line-height: 14px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 11px 16px;
+  border: 1px solid var(--emulsion);
+  color: var(--emulsion);
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  border-radius: 1px;
+  transition:
+    background-color 120ms ease-out,
+    color 120ms ease-out;
+}
+
+.hf-btn {
+  background: var(--emulsion);
+  color: var(--glass);
+}
+
+.hf-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--emulsion) 82%, var(--glass));
+}
+
+.hf-btn-quiet {
+  border-color: var(--rule-strong);
+}
+
+.hf-btn-quiet:hover:not(:disabled) {
+  border-color: var(--emulsion);
+  background: color-mix(in srgb, var(--emulsion) 6%, transparent);
+}
+
+.hf-btn-diazo {
+  border-color: var(--diazo);
+  color: var(--diazo);
+}
+
+.hf-btn-diazo:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--diazo) 8%, transparent);
+}
+
+.hf-btn:disabled,
+.hf-btn-quiet:disabled,
+.hf-btn-diazo:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.hf-input,
+.hf-select,
+.hf-textarea {
+  width: 100%;
+  background: color-mix(in srgb, var(--lighttable) 70%, var(--glass));
+  border: 1px solid var(--rule-strong);
+  border-radius: 1px;
+  padding: 9px 10px;
+  color: var(--emulsion);
+  font-family: var(--font-record);
+  font-size: 13px;
+  line-height: 19px;
+  font-variant-numeric: tabular-nums;
+}
+
+.hf-select {
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-variant-numeric: normal;
+}
+
+.hf-textarea {
+  min-height: 7rem;
+  resize: vertical;
+}
+
+/* Linework only. gate on glass is 1.32:1 and never carries text. */
+.hf-rule {
+  border-top: 1px solid var(--rule);
+}
+
+.hf-rule-strong {
+  border-top: 1px solid var(--rule-strong);
+}
+
+/* --------------------------------------------------------------------------
+   The consensus stage rail: one bar per stage, drawn as a strip of its own.
+
+   The retryable stages borrow the blank frame's dashed hatching for exactly
+   the reason the blank frame has it: nothing was recorded. A rejection is a
+   verdict and gets a filled bar, so "the round did not resolve" and "the round
+   resolved against you" are told apart by fill and not by wording alone.
+   -------------------------------------------------------------------------- */
+
+.hf-stage-bar {
+  height: 6px;
+  border: 1px solid var(--rule-strong);
+  background: color-mix(in srgb, var(--emulsion) 10%, transparent);
+}
+
+.hf-stage-done .hf-stage-bar {
+  background: var(--emulsion);
+  border-color: var(--emulsion);
+}
+
+.hf-stage-now .hf-stage-bar {
+  background: var(--diazo);
+  border-color: var(--diazo);
+}
+
+.hf-stage-retry .hf-stage-bar {
+  border-style: dashed;
+  background-color: var(--glass);
+  background-image: repeating-linear-gradient(
+    135deg,
+    var(--rule-strong) 0 2px,
+    transparent 2px 5px
+  );
+}
+
+/* Refusal tags. Dashed for the ones where nothing was read or recorded. */
+.hf-tag {
+  display: inline-block;
+  border: 1px solid var(--rule-strong);
+  padding: 0 6px;
+  border-radius: 1px;
+}
+
+.hf-tag-open {
+  border-style: dashed;
+}
+
+.hf-tag-verdict {
+  border-color: var(--emulsion);
+  background: color-mix(in srgb, var(--emulsion) 8%, transparent);
+}
+
+/* --------------------------------------------------------------------------
+   The strip below 760px: it runs down the page, oldest at the top, and the
+   caption moves alongside each frame instead of underneath it.
+
+   These overrides are written as descendant selectors rather than as Tailwind
+   utilities on the elements, because everything in this file is unlayered and
+   therefore outranks `@layer utilities` no matter what order they appear in.
+   A `w-full` on .hf-cell would silently lose.
+
+   The width test lives here rather than in the component, and .hf-strip-v is
+   therefore safe to render unconditionally. Tailwind's `strip:` variant applies
+   only to Tailwind utilities, so there is no `strip:hf-strip-v` to write, and
+   the alternative is a matchMedia hook that has no answer during the server
+   render and would lay the strip out the wrong way for the first paint.
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 759.98px) {
+  .hf-strip-v .hf-cell {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .hf-strip-v .hf-cell-window {
+    width: var(--frame-w);
+    min-width: var(--frame-w);
+  }
+
+  /* The pull forward on a differing frame is horizontal language. Down the page
+     it would read as two frames overlapping, so it is dropped here. */
+  .hf-strip-v .hf-cell-differs .hf-cell-window {
+    margin-top: 0;
+  }
+
+  .hf-strip-v .hf-run-band {
+    width: var(--frame-w);
+    min-width: var(--frame-w);
+  }
+}
+
+::selection {
+  background: color-mix(in srgb, var(--diazo) 20%, transparent);
+  color: var(--emulsion);
+}

@@ -1,0 +1,213 @@
+{
+  "_readme": [
+    "One table, read by two suites, so the contract and the client mirror are asserted to agree case",
+    "by case rather than by inspection. `tests/parity.test.mjs` runs it against src/lib, and",
+    "`tests/direct/test_parity.py` runs it against contracts/Holdfast.py.",
+    "",
+    "This exists because of what create_bond does when a rule disagrees. It is payable, and it used to",
+    "REVERT rather than refund, and StudioNet does not return gl.message.value on a revert, so a rule",
+    "the client got wrong was not a bad error message, it was a stranded stake. A funded transaction",
+    "proved that argument insufficient and create_bond is a refusal boundary now: it refunds and",
+    "returns the tagged sentence. A wrong rule here costs a signature and a refund at finality instead,",
+    "which is cheaper and still worth asserting away.",
+    "The two rules below are the two the client cannot avoid reimplementing: the anchor is DERIVED from",
+    "the URL and never supplied, so the form has to derive it to show it, and gate D's independence rule",
+    "compares normalized forms the promisor never sees.",
+    "",
+    "EVERY NON-ASCII CHARACTER IN THIS FILE IS WRITTEN AS A \\u ESCAPE, deliberately. Four of the",
+    "normalize cases turn on whether one invisible character is whitespace, and a file carrying those",
+    "characters literally cannot be reviewed in a diff or trusted through an editor.",
+    "",
+    "Every `expect` here was computed from the contract's own source, then checked by executing it.",
+    "None was typed from reading the TypeScript."
+  ],
+
+  "normalize": {
+    "_readme": [
+      "normalize_text: lowercase, collapse whitespace runs to one space, strip everything outside",
+      "[a-z0-9 ], trim. In that order, which is the specification and not an implementation detail.",
+      "",
+      "The order has two visible consequences and both are in this table. A stripped character between",
+      "two WORDS joins them. A stripped character between two SPACES leaves both spaces behind, because",
+      "step 2 has already run and nothing re-collapses them, which is why this function is not",
+      "idempotent and why a commitment is hashed exactly once.",
+      "",
+      "The last five cases are the whitespace class itself. Python's \\s and JavaScript's \\s are",
+      "different sets, and the difference changes the OUTPUT rather than just the classification: a",
+      "character counted as whitespace collapses to a space and separates its neighbours, and one",
+      "counted as ordinary is stripped and JOINS them."
+    ],
+    "cases": [
+      { "input": "Terms of Service", "expect": "terms of service", "why": "the ordinary case" },
+      { "input": "gzip/deflate", "expect": "gzipdeflate", "why": "a stripped character between two words joins them" },
+      { "input": "co-operate", "expect": "cooperate", "why": "so does a hyphen, which is what makes co-operate and cooperate the same section" },
+      { "input": "a - b", "expect": "a  b", "why": "a stripped character between two spaces leaves both: two spaces out, not one" },
+      { "input": "30 EUR / (c) 2026", "expect": "30 eur  c 2026", "why": "the same double space, in a string somebody would really paste" },
+      { "input": "  padded  ", "expect": "padded", "why": "step 4" },
+      { "input": "Tabs\tand\nnewlines", "expect": "tabs and newlines", "why": "step 2 over the ASCII whitespace class" },
+      { "input": "multi   spaces", "expect": "multi spaces", "why": "a run collapses to one" },
+      { "input": "MiXeD123", "expect": "mixed123", "why": "digits survive step 3" },
+      { "input": "!!!", "expect": "", "why": "a marker that normalizes to nothing; refused by an earlier check in both languages" },
+      { "input": "", "expect": "", "why": "the empty string, which the client passes on every keystroke of an empty field" },
+      { "input": "caf\u00e9", "expect": "caf", "why": "step 3 is ASCII only, so an accent is dropped rather than folded" },
+      { "input": "data\u00a0sharing", "expect": "data sharing", "why": "U+00A0 no-break space is whitespace to both languages" },
+      { "input": "data\u2003sharing", "expect": "data sharing", "why": "U+2003 em space likewise" },
+      { "input": "data\u0085sharing", "expect": "data sharing", "why": "U+0085 NEL is whitespace to Python and NOT to JavaScript's \\s, so the mirror writes the class out" },
+      { "input": "data\u001fsharing", "expect": "data sharing", "why": "U+001F unit separator, same story" },
+      { "input": "data\ufeffsharing", "expect": "datasharing", "why": "THE REVERSE. A BOM is whitespace to JavaScript and not to Python, so it JOINS: one word, not two" }
+    ]
+  },
+
+  "anchor": {
+    "_readme": [
+      "Gate B's anchor, derived from the URL's last non-empty path segment: strip the query, drop a",
+      "trailing extension of 1 to 5 alphanumeric characters when something is left in front of it,",
+      "turn hyphens and underscores into spaces, trim.",
+      "",
+      "`bondable` is whether the normalized anchor reaches MIN_DERIVED_ANCHOR_CHARS. A URL that fails",
+      "it cannot be bonded at all, for a reason no form field shows, which is the whole argument for",
+      "mirroring this rather than approximating it."
+    ],
+    "cases": [
+      { "url": "https://cloud.google.com/terms", "expect": "terms", "normalized": "terms", "bondable": true, "why": "the flagship bond's own URL" },
+      { "url": "https://example.com/legal/", "expect": "legal", "normalized": "legal", "bondable": true, "why": "a trailing slash is not the problem: the walk goes back to the last non-empty segment" },
+      { "url": "https://example.com/legal/model-terms", "expect": "model terms", "normalized": "model terms", "bondable": true, "why": "a hyphen becomes a space in the anchor, before normalization removes it" },
+      { "url": "https://example.com/policies/data_processing", "expect": "data processing", "normalized": "data processing", "bondable": true, "why": "underscores too" },
+      { "url": "https://example.com/terms?v=2", "expect": "terms", "normalized": "terms", "bondable": true, "why": "the query is stripped, so two links to one page derive one anchor" },
+      { "url": "https://example.com/licenses/gpl-3.0.html", "expect": "gpl 3.0", "normalized": "gpl 30", "bondable": true, "why": ".html goes and .0 stays, because the head before the second dot would be empty" },
+      { "url": "https://example.com/terms.xhtml", "expect": "terms", "normalized": "terms", "bondable": true, "why": "five characters is the longest extension dropped" },
+      { "url": "https://example.com/terms.longer", "expect": "terms.longer", "normalized": "termslonger", "bondable": true, "why": "six is not, so the dot survives into the anchor and then JOINS the two words" },
+      { "url": "https://example.com/terms.ht-ml", "expect": "terms.ht ml", "normalized": "termsht ml", "bondable": true, "why": "a non-alphanumeric extension is not an extension" },
+      { "url": "https://example.com/terms.", "expect": "terms.", "normalized": "terms", "bondable": true, "why": "an empty extension is not dropped, and normalization removes the dot anyway" },
+      { "url": "https://example.com/.well-known", "expect": ".well known", "normalized": "well known", "bondable": true, "why": "a leading dot leaves an empty head, so nothing is treated as an extension" },
+      { "url": "https://example.com/Legal/Model-TERMS", "expect": "Model TERMS", "normalized": "model terms", "bondable": true, "why": "the anchor keeps its case; only the comparison is normalized" },
+      { "url": "https://example.com/2026", "expect": "2026", "normalized": "2026", "bondable": true, "why": "digits count toward the floor" },
+      { "url": "https://example.com/", "expect": "", "normalized": "", "bondable": false, "why": "a bare host derives nothing: bond the page, not the site" },
+      { "url": "https://example.com", "expect": "", "normalized": "", "bondable": false, "why": "and with no trailing slash either" },
+      { "url": "https://example.com/a/b/", "expect": "b", "normalized": "b", "bondable": false, "why": "one character is under the floor, so this URL is unbondable" },
+      { "url": "https://example.com/v1.2", "expect": "v1", "normalized": "v1", "bondable": false, "why": "THE TRAP. The extension stripper eats the version, and a version number is exactly what somebody would bond" }
+    ]
+  },
+
+  "independence": {
+    "_readme": [
+      "Gate D's terminal marker must be independent of gate B's anchor and of every gate C section, in",
+      "both directions, by equality or by substring, after normalization.",
+      "",
+      "`overlaps` is null when the spec is usable, \"anchor\" or \"section\" when it is not. The contract",
+      "checks the anchor first, so no case here collides with both.",
+      "",
+      "The rule exists because two of the four measured pages declared a degenerate marker: one used its",
+      "own anchor, the other one of its own sections. On those pages gate D could not fail unless B or C",
+      "had already failed, so the composite was three gates wearing four names."
+    ],
+    "cases": [
+      {
+        "url": "https://cloud.google.com/terms",
+        "sections": ["definitions", "payment", "confidential"],
+        "terminal": "governing law",
+        "overlaps": null,
+        "why": "the working draft every other lifecycle test is built on"
+      },
+      {
+        "url": "https://cloud.google.com/terms",
+        "sections": ["definitions", "payment", "confidential"],
+        "terminal": "Governing Law",
+        "overlaps": null,
+        "why": "case is normalized away before comparison, so this is the same spec"
+      },
+      {
+        "url": "https://cloud.google.com/terms",
+        "sections": ["definitions", "payment", "confidential"],
+        "terminal": "terms",
+        "overlaps": "anchor",
+        "why": "the measured AWS case: the marker was the anchor, spelled the same"
+      },
+      {
+        "url": "https://cloud.google.com/terms",
+        "sections": ["definitions", "payment", "confidential"],
+        "terminal": "these terms apply",
+        "overlaps": "anchor",
+        "why": "the anchor inside the marker; a sentence somebody would pick from the top of the page"
+      },
+      {
+        "url": "https://cloud.google.com/terms",
+        "sections": ["definitions", "payment", "confidential"],
+        "terminal": "term",
+        "overlaps": "anchor",
+        "why": "and the other direction: the marker inside the anchor"
+      },
+      {
+        "url": "https://cloud.google.com/terms",
+        "sections": ["definitions", "payment", "confidential"],
+        "terminal": "payment",
+        "overlaps": "section",
+        "why": "the measured GCP case: the marker was one of its own sections"
+      },
+      {
+        "url": "https://cloud.google.com/terms",
+        "sections": ["definitions", "payment", "confidential"],
+        "terminal": "late payment fees",
+        "overlaps": "section",
+        "why": "a section inside the marker, and no collision with the anchor, so this reaches the section loop"
+      },
+      {
+        "url": "https://cloud.google.com/terms",
+        "sections": ["definitions", "payment", "confidential"],
+        "terminal": "pay",
+        "overlaps": "section",
+        "why": "the marker inside a section"
+      },
+      {
+        "url": "https://cloud.google.com/terms",
+        "sections": ["definitions", "governing", "confidential"],
+        "terminal": "governing law",
+        "overlaps": "section",
+        "why": "the same marker that passes above, refused because a section moved under it"
+      },
+      {
+        "url": "https://cloud.google.com/terms",
+        "sections": ["definitions", "cooperate", "confidential"],
+        "terminal": "co-operate",
+        "overlaps": "section",
+        "why": "THE ONE INSPECTION MISSES. Two strings that differ raw are equal normalized, so this collides"
+      },
+      {
+        "url": "https://example.com/legal/model-terms",
+        "sections": ["definitions", "payment", "confidential"],
+        "terminal": "mod",
+        "overlaps": "anchor",
+        "why": "a three character marker inside a two word derived anchor the promisor never typed"
+      },
+      {
+        "url": "https://example.com/legal/model-terms",
+        "sections": ["definitions", "payment", "confidential"],
+        "terminal": "governing law",
+        "overlaps": null,
+        "why": "the same marker against a different derived anchor, to show the anchor is what moved"
+      }
+    ]
+  },
+
+  "unreachable": {
+    "_readme": [
+      "One measured DIVERGENCE, and the check that makes it unreachable in both languages.",
+      "",
+      "The client's section loop skips an entry that normalizes to empty. The contract's does not: it",
+      "asks `terminal in other or other in terminal`, and the empty string is a substring of every",
+      "string, so an empty-normalizing section would make EVERY marker overlap. The two would disagree",
+      "on every draft carrying such a section.",
+      "",
+      "Neither can be reached, because both languages refuse the section list first: every entry has to",
+      "normalize to between MIN_ANCHOR_WORD_CHARS and MAX_ANCHOR_WORD_CHARS. The case below is the",
+      "proof of that, asserted rather than assumed, because it is the only thing standing between the",
+      "two implementations and a real disagreement."
+    ],
+    "empty_normalizing_section": {
+      "sections": ["definitions", "!!!", "confidential"],
+      "terminal": "governing law",
+      "normalizes_to": "",
+      "why": "refused by _require_anchor_words in the contract and by checkAnchorEntries in the client"
+    }
+  }
+}

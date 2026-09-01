@@ -1,0 +1,36 @@
+
+=== get_limits ===
+{
+  "breach_run_length": "2",
+  "cdx_warc_length_max": "250000",
+  "check_interval_seconds": "86400",
+  "contest_bond_basis_points": "1000",
+  "contest_window_seconds": "604800",
+  "decoded_max_bytes": "4000000",
+  "gate_a_enabled": false,
+  "max_anchor_words": "12",
+  "max_commitment_chars": "400",
+  "max_points_per_check": "8",
+  "max_term_days": "1095",
+  "min_anchor_words": "3",
+  "min_change_points": "3",
+  "min_commitment_chars": "40",
+  "min_term_days": "30",
+  "raw_max_bytes": "2500000"
+}
+
+=== get_ledger ===
+{
+  "bonds_created": "0",
+  "breaches_claimed": "0",
+  "checks_run": "0",
+  "contests_filed": "0",
+  "fee_basis_points": "0",
+  "total_escrowed": "0",
+  "total_paid_to_payees": "0",
+  "total_returned_to_promisors": "0"
+}
+
+=== list_bonds ===
+[]
+EXIT=0

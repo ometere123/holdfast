@@ -1,0 +1,6 @@
+
+> holdfast@0.1.0 verify:deployment
+> node scripts/verify-deployment-source.mjs
+
+Deployed source matches contracts/Holdfast.py (sha256 202a4389d77163d3, 141135 chars) at 0x4Acdca77b8270488AF0CDdf50D13Ba86a19B690C.
+EXIT=0

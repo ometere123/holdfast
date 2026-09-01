@@ -1,0 +1,16 @@
+typed args: string(hf-gcp-terms-12mo-notice), string(https://cloud.google.com/terms/), string(Google will notify Customer at least 12 months before discontinuing any Service or associated material functionality, unless Google replaces such discontinued Service or functionality with a materially similar Service or functionality.), string(20260129024608), string(["definitions", "payment terms", "confidentiality", "intellectual property", "term and termination"]), string(governing law), string(0xac3ac69dc0bde389256dd6748c75817ead9286d9), number(365)
+value-wei: 250000000000000000
+[genlayer-js] initializeConsensusSmartContract() is deprecated and will be removed in a future release. The consensus contract is now resolved from the static chain definition.
+- Calling write method create_bond on contract at 0x4Acdca77b8270488AF0CDdf50D13Ba86a19B690C...
+
+Write Transaction Hash:
+0xc3a12dd230dd501287450c23d4db78a9e2c610084cc30dc318471d604662d888
+
+Error:
+Error: Timed out waiting for transaction 0xc3a12dd230dd501287450c23d4db78a9e2c610084cc30dc318471d604662d888 to reach status "ACCEPTED" (current status: 3).
+    at Object.waitForTransactionReceipt (file:///C:/Users/USER/Desktop/latestprojects/_build/genlayer-cli-payable/dist/typed-write.mjs:41189:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async WriteAction.write (file:///C:/Users/USER/Desktop/latestprojects/_build/genlayer-cli-payable/dist/typed-write.mjs:42619:22)
+    at async main2 (file:///C:/Users/USER/Desktop/latestprojects/_build/genlayer-cli-payable/dist/typed-write.mjs:42654:3)
+
+✖ Error during write operation

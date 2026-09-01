@@ -1,0 +1,30 @@
+{
+  "_readme": [
+    "The arguments for Holdfast bond 1, in the order create_bond takes them, kept as a file",
+    "rather than typed into a shell twice. The zero-value simulation and the funded send have to",
+    "carry byte-identical arguments or the simulation proves nothing about the send, which is the",
+    "entire reason create_bond reverts instead of refunding.",
+    "",
+    "Chosen offline against _build/fixtures/holdfast/snap-gcp-terms-gzip.bin, which is the exact",
+    "gzip Wayback replays for this timestamp, and re-verified against the live archive by",
+    "_build/preflight-live.py: CDX 200 with the pin at row 0 of a 40-row window, snapshot 200,",
+    "digest ORCARP7HGOXUBBYK4LXACZM7GU5ZBMMY agreeing with the fetched bytes, gates 5 of 5.",
+    "",
+    "anchor_words is a JSON array inside a string because GenVM contract arguments carry no list",
+    "type. payee is a string for the reason the create_bond docstring gives: the CLI coerces any",
+    "40-hex argument to an Address, which makes a typo indistinguishable from an intention."
+  ],
+  "bond_id": "hf-gcp-terms-12mo-notice",
+  "url": "https://cloud.google.com/terms/",
+  "commitment": "Google will notify Customer at least 12 months before discontinuing any Service or associated material functionality, unless Google replaces such discontinued Service or functionality with a materially similar Service or functionality.",
+  "baseline_timestamp": "20260129024608",
+  "anchor_words": "[\"definitions\", \"payment terms\", \"confidentiality\", \"intellectual property\", \"term and termination\"]",
+  "anchor_terminal": "governing law",
+  "payee": "0xac3ac69dc0bde389256dd6748c75817ead9286d9",
+  "term_days": 365,
+  "_stakeWei": "250000000000000000",
+  "_derivedAnchor": "terms",
+  "_anchorNote": "Derived by the contract from the last path segment of the url and never supplied. 'terms' is five normalized characters, over the MIN_DERIVED_ANCHOR_CHARS floor of 3.",
+  "_terminalNote": "'governing law' is independent of the derived anchor 'terms' and of all five sections, in both directions, by equality and by substring, which is what GateSpec.validate requires and what gate D needs in order to be able to fail on its own.",
+  "_urlNote": "The trailing slash is load-bearing. Wayback answers 302 for the id_ replay of https://cloud.google.com/terms and 200 for https://cloud.google.com/terms/, with a byte-identical 14-digit timestamp in the Location, so it is URL normalisation and not snapshot substitution. _derive_anchor skips empty path segments, so the slash does not change the derived anchor."
+}
