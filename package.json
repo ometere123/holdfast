@@ -1,5 +1,6 @@
 {
   "name": "holdfast",
+  "type": "module",
   "version": "0.1.0",
   "private": true,
   "license": "Apache-2.0",
@@ -12,11 +13,12 @@
     "verify:schema": "node scripts/verify-schema.mjs",
     "verify:deployment": "node scripts/verify-deployment-source.mjs",
     "verify:citations": "node scripts/verify-citations.mjs --quiet",
+    "verify:fixtures": "python scripts/verify_fixtures.py",
     "verify:emdash": "python scripts/emdash-check.py .",
     "test:direct": "python -m pytest tests/direct -q",
     "test": "node --test tests/*.test.mjs",
     "test:e2e": "playwright test",
-    "verify": "npm test && npm run test:direct && npm run verify:citations && npm run verify:emdash && npm run typecheck && npm run lint && npm run build",
+    "verify": "npm test && npm run test:direct && npm run verify:citations && npm run verify:fixtures && npm run verify:emdash && npm run typecheck && npm run lint && npm run build",
     "check": "npm run verify"
   },
   "dependencies": {

@@ -1,6 +1,6 @@
 """The captured Wayback responses, served to the contract under the real SDK.
 
-WHY THE BYTES ARE ON DISK. Every payload in `_build/fixtures/holdfast/` came off the live archive
+WHY THE BYTES ARE ON DISK. Every payload in `tests/fixtures/holdfast/` came off the live archive
 while the decoding path was being built, and six of the eight are gzip members. That is the whole
 subject of this project: Wayback's `id_` replay hands back the archived bytes verbatim, so a page
 served compressed in 2019 replays as compressed in 2026, and those compressed bytes are identical
@@ -29,7 +29,7 @@ import json
 import re
 from pathlib import Path
 
-FIXTURES = Path(__file__).resolve().parents[3] / "_build" / "fixtures" / "holdfast"
+FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "holdfast"
 MANIFEST = json.loads((FIXTURES / "manifest.json").read_text(encoding="utf-8"))
 
 ROUTES = {route["name"]: route for route in MANIFEST["routes"]}

@@ -31,7 +31,7 @@ import {
 const CONTRACT_LINES = readFileSync(new URL("../contracts/Holdfast.py", import.meta.url), "utf8").split("\n");
 const MODULE_SOURCE = readFileSync(new URL("../src/lib/archive-evidence.ts", import.meta.url), "utf8");
 
-const FIXTURE_DIR = new URL("../../_build/fixtures/holdfast/", import.meta.url);
+const FIXTURE_DIR = new URL("./fixtures/holdfast/", import.meta.url);
 const MANIFEST = JSON.parse(readFileSync(new URL("manifest.json", FIXTURE_DIR), "utf8"));
 const ROUTES = new Map(MANIFEST.routes.map((route) => [route.name, route]));
 

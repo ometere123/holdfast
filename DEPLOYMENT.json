@@ -1,0 +1,11 @@
+{
+  "canonicalStatus": "NOT PROVEN LIVE",
+  "network": "studionet",
+  "contract": null,
+  "deploymentTransaction": null,
+  "sourceCommit": null,
+  "sourceSha256": null,
+  "contractBytes": null,
+  "reason": "No finalized StudioNet deployment is carried for the current source. Do not infer deployment success from a submission hash.",
+  "historicalEvidence": "No canonical address is claimed by this repository."
+}

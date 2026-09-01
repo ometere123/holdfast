@@ -1,7 +1,7 @@
 """Windows compatibility for genlayer-test's direct loader, the value ledger, and the clock.
 
 WHAT THIS SUITE IS FOR, AND WHY IT IS NOT THE ARCHIVE SUITE AGAIN. The decode, gate and judging
-logic already has 63 offline tests, run against `_build/holdfast-archive/archive.py` before that
+logic already has 63 offline tests, run against `_build/holdfast-archive/archive.py` carried here
 file is spliced into the contract. Those tests drive the pipeline over real captured bytes under a
 hand-written stub, which is what lets them forge a truncated gzip member and a chrome-only page.
 This suite runs the assembled contract under the real GenVM SDK, loaded out of the cached tarball,

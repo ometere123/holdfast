@@ -28,7 +28,7 @@ import assert from "node:assert/strict";
 const MOCK_PATH = new URL("../src/lib/mock-data.ts", import.meta.url);
 const MOCK_SOURCE = readFileSync(MOCK_PATH, "utf8");
 
-const FIXTURE_DIR = new URL("../../_build/fixtures/holdfast/", import.meta.url);
+const FIXTURE_DIR = new URL("./fixtures/holdfast/", import.meta.url);
 const MANIFEST = JSON.parse(readFileSync(new URL("manifest.json", FIXTURE_DIR), "utf8"));
 
 /**

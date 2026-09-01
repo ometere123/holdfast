@@ -1789,7 +1789,7 @@ stake must never move on a reading that two independent evaluations could not re
 # ======================================================================================
 
 def _fetch(url, method="GET", headers=None, timeout=None):
-    """`fetch_bytes`'s adapter onto the SDK.
+    """Fail-closed sentinel; live fetch adapters are defined inside EP blocks.
 
     `gl.nondet.web.request` has no `timeout` keyword, and the embedded region always passes one
     because it was written and measured against a `requests`-shaped fetcher where Wayback needs
@@ -1798,7 +1798,7 @@ def _fetch(url, method="GET", headers=None, timeout=None):
 
     It is `.status`, not `.status_code`. The published SDK example is wrong about this.
     """
-    return gl.nondet.web.request(url, method=method, headers=headers or {})
+    raise RuntimeError("network fetch attempted outside an equivalence-principle block")
 
 
 @gl.evm.contract_interface
@@ -2200,7 +2200,9 @@ class Holdfast(gl.Contract):
         contain the timestamp their paired snapshot named, for exactly that reason.
         """
         def work():
-            index = load_anchored_window(_fetch, url, stamp, to_date, CDX_ROW_LIMIT)
+            def ep_fetch(url, method="GET", headers=None, timeout=None):
+                return gl.nondet.web.request(url, method=method, headers=headers or {})
+            index = load_anchored_window(ep_fetch, url, stamp, to_date, CDX_ROW_LIMIT)
             if is_refusal(index):
                 return {"error": index.message}
             enough = has_min_change_points(index, MIN_CHANGE_POINTS,
@@ -2236,7 +2238,9 @@ class Holdfast(gl.Contract):
         instead of skipping it.
         """
         def work():
-            index = load_change_points(_fetch, url, cursor, to_date, CDX_ROW_LIMIT)
+            def ep_fetch(url, method="GET", headers=None, timeout=None):
+                return gl.nondet.web.request(url, method=method, headers=headers or {})
+            index = load_change_points(ep_fetch, url, cursor, to_date, CDX_ROW_LIMIT)
             if is_refusal(index):
                 return {"error": index.message}
             rows = []
@@ -2263,7 +2267,9 @@ class Holdfast(gl.Contract):
         exact, and the row still has to exist.
         """
         def work():
-            index = load_change_points(_fetch, url, stamp, to_date, CDX_ROW_LIMIT)
+            def ep_fetch(url, method="GET", headers=None, timeout=None):
+                return gl.nondet.web.request(url, method=method, headers=headers or {})
+            index = load_change_points(ep_fetch, url, stamp, to_date, CDX_ROW_LIMIT)
             if is_refusal(index):
                 return {"error": index.message}
             row = require_timestamp(index, stamp)
@@ -2289,11 +2295,13 @@ class Holdfast(gl.Contract):
         new way to fail, only payload weight, bounded here at PROMPT_TEXT_MAX_CHARS.
         """
         def work():
+            def ep_fetch(url, method="GET", headers=None, timeout=None):
+                return gl.nondet.web.request(url, method=method, headers=headers or {})
             length = None if int(warc_length) < 0 else int(warc_length)
             bad = check_warc_length(length)
             if bad is not None:
                 return {"error": bad.message}
-            admission = retrieve_snapshot(_fetch, stamp, url, digest, spec,
+            admission = retrieve_snapshot(ep_fetch, stamp, url, digest, spec,
                                           warc_length=length)
             if is_refusal(admission):
                 return {"error": admission.message}

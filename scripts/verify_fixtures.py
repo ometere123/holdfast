@@ -36,7 +36,7 @@ import zlib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-FIXTURES = ROOT.parent / "_build" / "fixtures" / "holdfast"
+FIXTURES = ROOT / "tests" / "fixtures" / "holdfast"
 CONTRACT = ROOT / "contracts" / "Holdfast.py"
 
 STAMP_IN_URL = re.compile(r"/web/(\d{14})id_/")

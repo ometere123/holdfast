@@ -10,7 +10,7 @@
  * This module is separate from `mock-data.ts` so the method page can cite a measurement without
  * importing a single invented bond. Nothing here is bonded anywhere in this app.
  *
- * HOW THE COUNTS RECONCILE. `_build/fixtures/holdfast/` holds eight captured payloads. Seven are
+ * HOW THE COUNTS RECONCILE. `tests/fixtures/holdfast/` holds eight captured payloads. Seven are
  * real replays and are enumerated in `GZIP_EVIDENCE` below; the eighth was built by hand and is
  * held separately in `SYNTHETIC_NEGATIVE` so it can never be counted as evidence about a real page.
  * Six of the eight begin `1f8b` (five real, one synthetic) and two begin `3c21` (both real).
