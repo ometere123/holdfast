@@ -1,11 +1,14 @@
 {
-  "canonicalStatus": "NOT PROVEN LIVE",
+  "canonicalStatus": "CANONICAL",
   "network": "studionet",
-  "contract": null,
-  "deploymentTransaction": null,
-  "sourceCommit": null,
-  "sourceSha256": null,
-  "contractBytes": null,
-  "reason": "No finalized StudioNet deployment is carried for the current source. Do not infer deployment success from a submission hash.",
-  "historicalEvidence": "No canonical address is claimed by this repository."
+  "contract": "0x0D656F1A319Dad705eeE9CF25045CF22a05776B9",
+  "deploymentTransaction": "0x19543305c177b30e8fd5308d26256eb24416d6994e1bde659fa68037bb17f07e",
+  "sourceCommit": "2660bc5807b785a4327b2f410b61d4a1a7aa7300",
+  "sourceSha256": "d8c1f051976ab84d689ebc80b1700896d1ba03eedec8cfc2e8fe01efc1baad87",
+  "contractBytes": 156164,
+  "deployedSourceVerified": true,
+  "schemaVerified": true,
+  "deploymentFinalizedAt": "2026-09-01T23:04:34.432218+00:00",
+  "reason": "Finalized StudioNet deployment with GenVM SUCCESS, callable schema, and raw byte-for-byte source parity.",
+  "historicalEvidence": "Earlier deployment state was not claimed; this record now carries the canonical current-source deployment."
 }

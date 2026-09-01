@@ -13,8 +13,9 @@ Submission record: [`docs/SUBMISSION.md`](docs/SUBMISSION.md)
 
 Current status: the Holdfast contract, fixture archive reader, lifecycle rail, injected wallet
 controls, bond creation/contest/settlement flows, direct/frontend regression suites, and served-build
-browser checks are wired. A canonical StudioNet deployment is **NOT PROVEN LIVE** until a finalized
-current-source deployment, source parity, schema parity and re-readable evidence are recorded.
+browser checks are wired. Canonical StudioNet deployment:
+`0x0D656F1A319Dad705eeE9CF25045CF22a05776B9` (finalized, GenVM SUCCESS, source/schema parity
+recorded). Representative payable live exercises remain explicitly limited in the evidence record.
 
 ## Layout
 

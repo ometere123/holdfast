@@ -13,8 +13,10 @@ a breach.
 
 The fixture corpus is self-contained under `tests/fixtures/holdfast/`; `scripts/verify_fixtures.py`
 re-derives its manifest from those bytes. Any address in `DEPLOYMENT.json` is canonical only when
-its finalized receipt, schema and byte-for-byte source parity match the final Git commit. Missing
-or stale deployment data is **NOT PROVEN LIVE**, never implied by a successful submission hash.
+its finalized receipt, schema and byte-for-byte source parity match the final Git commit. The
+canonical deployment is `0x0D656F1A319Dad705eeE9CF25045CF22a05776B9`, transaction
+`0x19543305c177b30e8fd5308d26256eb24416d6994e1bde659fa68037bb17f07e`; payable live exercises
+remain limited and are labelled in the evidence record.
 
 ## Verification
 

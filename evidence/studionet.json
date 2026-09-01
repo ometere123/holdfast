@@ -1,8 +1,9 @@
 {
-  "status": "NOT PROVEN LIVE",
+  "status": "CANONICAL DEPLOYMENT; LIVE EXERCISES PENDING",
   "network": "studionet",
-  "contract": null,
-  "transactions": [],
-  "reason": "Representative live flows have not been recorded against a finalized deployment of the current source.",
+  "contract": "0x0D656F1A319Dad705eeE9CF25045CF22a05776B9",
+  "deployment": { "tx": "0x19543305c177b30e8fd5308d26256eb24416d6994e1bde659fa68037bb17f07e", "finality": "FINALIZED", "genvm": "SUCCESS", "rpcResult": "0x1", "gitCommit": "2660bc5807b785a4327b2f410b61d4a1a7aa7300", "sourceSha256": "d8c1f051976ab84d689ebc80b1700896d1ba03eedec8cfc2e8fe01efc1baad87", "sourceBytes": 156164, "sourceParity": "PASS", "schema": "PASS", "safeRead": { "method": "list_bonds", "args": [], "result": [] }, "valueInvariant": { "contractBalanceWei": "0", "openBondObligationsWei": "0", "unexplainedWei": "0" } },
+  "transactions": [{"label":"zero-value create refusal","tx":"0x78dc05b77ad0e824b57004099826e5ee9de2b9efdd54a01c8e7cf05b1fe2a1a1","method":"create_bond","args":["holdfast-final-1","https://example.com","commitment-that-is-long-enough-for-the-contract-to-accept-as-a-test-value","20200101000000",["payment","security","liability"],"liability","0xb29ead15b1e8a2420fae84de974088f67a15ccc2",30],"caller":"0xb29Ead15B1E8A2420faE84de974088f67a15ccC2","recipient":"0x0D656F1A319Dad705eeE9CF25045CF22a05776B9","valueWei":"0","finality":"FINALIZED","genvm":"SUCCESS","valueCredited":false,"result":"refusal; list_bonds remained empty","stateAfter":{"list_bonds":[]},"proofStatus":"PROVEN LIVE"}],
+  "reason": "Canonical deployment is verified; representative payable live exercises remain limited and are labelled individually.",
   "directOnly": ["fixture admission", "archive failure gates", "bond lifecycle", "contest and settlement state machine"]
 }
