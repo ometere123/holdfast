@@ -11,7 +11,7 @@ a breach.
 
 ## Repository and deployment status
 
-Live app: https://holdfast-o8fxw1xzl-delealufejoel-4184s-projects.vercel.app
+Live app: https://holdfast-orpin.vercel.app
 
 The fixture corpus is self-contained under `tests/fixtures/holdfast/`; `scripts/verify_fixtures.py`
 re-derives its manifest from those bytes. Any address in `DEPLOYMENT.json` is canonical only when

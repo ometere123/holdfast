@@ -16,7 +16,7 @@ controls, bond creation/contest/settlement flows, direct/frontend regression sui
 browser checks are wired. Canonical StudioNet deployment:
 `0x0D656F1A319Dad705eeE9CF25045CF22a05776B9` (finalized, GenVM SUCCESS, source/schema parity
 recorded). Representative payable live exercises remain explicitly limited in the evidence record.
-Live app: https://holdfast-o8fxw1xzl-delealufejoel-4184s-projects.vercel.app
+Live app: https://holdfast-orpin.vercel.app
 
 ## Layout
 
