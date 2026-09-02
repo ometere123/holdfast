@@ -52,10 +52,31 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   // The same pass deletes anything an earlier generated-wallet build left behind. Holdfast
   // supports injected wallets only, and legacy key material is removed rather than migrated.
   useEffect(() => {
+    let cancelled = false;
+    const provider = window.ethereum;
     queueMicrotask(() => {
-      setHasInjected(Boolean(window.ethereum));
+      if (cancelled) return;
+      setHasInjected(Boolean(provider));
       purgeLegacyGeneratedKey();
     });
+    if (!provider) return () => { cancelled = true; };
+
+    // Restore only an account the provider has already exposed to this origin. This is passive
+    // session discovery, not eth_requestAccounts: a wallet connected before the page loaded is
+    // usable on its first write while a fresh page still never asks for consent on its own.
+    void (async () => {
+      try {
+        const accounts = (await provider.request({ method: "eth_accounts" })) as `0x${string}`[];
+        if (!accounts?.[0] || cancelled) return;
+        const chainId = parseChainId(await provider.request({ method: "eth_chainId" }));
+        if (!cancelled) {
+          setWallet(nextWalletState(DISCONNECTED, { type: "connected", address: accounts[0], chainId }));
+        }
+      } catch {
+        // Passive discovery is best effort. The explicit connect button remains the recovery path.
+      }
+    })();
+    return () => { cancelled = true; };
   }, []);
 
   // Follow the wallet for as long as a session is open. All three events matter: the address

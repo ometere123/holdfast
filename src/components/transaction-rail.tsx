@@ -114,7 +114,7 @@ export function TransactionRail() {
   if (transactions.length === 0) {
     return (
       <div>
-        <h2 className="hf-heading">Transactions from this browser</h2>
+        <p className="hf-note">No recent writes from this browser.</p>
         <p className="hf-note mt-2 max-w-[62ch]">
           Nothing has been sent from this browser yet. This list is a local record of what you sent,
           not a record of the bond. The bond keeps its own record on chain and every page here reads
@@ -127,7 +127,7 @@ export function TransactionRail() {
   return (
     <div>
       <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <h2 className="hf-heading">Transactions from this browser</h2>
+        <h2 className="sr-only">Recent browser writes</h2>
         <button type="button" className="hf-btn-quiet" onClick={clear}>
           Clear this list
         </button>

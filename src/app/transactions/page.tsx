@@ -7,28 +7,50 @@
  */
 
 import { TransactionRail } from "@/components/transaction-rail";
+import { WalletActivity, type WalletActivityRead } from "@/components/wallet-activity";
+import { getBond, listBonds } from "@/lib/data-source";
+import type { Bond } from "@/lib/contract-types";
+import { dataMode } from "@/lib/data-source";
 
 export const dynamic = "force-dynamic";
 
-export default function TransactionsPage() {
+export default async function TransactionsPage() {
+  const summaries = await listBonds();
+  let activity: WalletActivityRead;
+  if (summaries.kind !== "AVAILABLE") {
+    activity = { kind: "unavailable", message: "The bond register could not be read." };
+  } else {
+    const reads = await Promise.all(summaries.value.map((bond) => getBond(bond.bond_id)));
+    const failed = reads.find((read) => read.kind === "UNAVAILABLE" || read.kind === "INVALID_RESPONSE");
+    activity = failed
+      ? { kind: "unavailable", message: "One or more bond records could not be read." }
+      : {
+          kind: "available",
+          bonds: reads.flatMap((read) => (read.kind === "AVAILABLE" ? [read.value] : [])) as Bond[],
+          mode: dataMode,
+        };
+  }
+
   return (
     <div>
-      <p className="hf-label">Transactions</p>
-      <h1 className="hf-display mt-1">Writes sent from this browser</h1>
+      <p className="hf-label">Activity</p>
+      <h1 className="hf-display mt-1">Activity</h1>
 
       <p className="hf-body mt-4 max-w-[80ch]">
-        Six consensus stages, always all six, so a write shows how far it got rather than only naming
-        where it stopped. Three of the stopping points are consensus failing to conclude rather than
-        deciding anything: those are tagged transient and are the ones worth sending again.
+        See the bonds involving a connected wallet and the writes recorded by this browser. The
+        contract register and the local write rail are deliberately kept as separate sources.
       </p>
 
-      <p className="hf-note mt-3 max-w-[80ch]">
-        This list is held in this tab and nowhere else. It is not an index of the contract&apos;s
-        activity and does not claim to be one: writes made from another browser are absent from it,
-        and clearing this browser&apos;s storage empties it without changing anything on chain.
-      </p>
+      <WalletActivity read={activity} />
 
-      <div className="mt-8">
+      <section aria-labelledby="browser-writes-heading" className="mt-12">
+        <h2 id="browser-writes-heading" className="hf-heading">Recent writes from this browser</h2>
+        <p className="hf-note mt-2 max-w-[70ch]">
+          This is a local record of writes submitted from this browser. It is not complete chain
+          history and may not include transactions sent from another device or browser.
+        </p>
+      </section>
+      <div className="mt-4">
         <TransactionRail />
       </div>
     </div>

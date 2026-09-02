@@ -188,11 +188,13 @@ export function CreateForm({ limits }: { limits?: Limits }) {
 
         <fieldset className="mt-8 border-0 p-0" disabled={busy}>
           <legend className="hf-label hf-label-ink">The gates a capture must pass</legend>
-          <p className="hf-note mt-2 max-w-[76ch]">
-            These describe what a faithful capture of this page looks like. They exist so that an
-            archive that recorded a broken page, or a page whose navigation was captured without its
-            body, is refused as evidence rather than read as a commitment that vanished.
-          </p>
+          <details className="mt-2 max-w-[76ch]">
+            <summary className="hf-label cursor-pointer">Technical detail</summary>
+            <p className="hf-note mt-3">
+              These gates describe a faithful capture. A broken page or navigation-only capture is
+              refused as evidence rather than read as a vanished commitment.
+            </p>
+          </details>
 
           <Field
             label="Required sections, one per line"
@@ -335,12 +337,14 @@ export function CreateForm({ limits }: { limits?: Limits }) {
           <h2 className="hf-heading" id="dry-heading">
             Ask the contract before you pay it
           </h2>
-          <p className="hf-body mt-3 max-w-[80ch]">
-            This sends the identical call with no value attached. The contract checks its value last
-            on purpose, so a simulation runs every other deterministic refusal first and can only
-            stop at the missing stake. Stopping there is the good answer. Stopping anywhere else is a
-            refusal you would otherwise have paid to discover.
-          </p>
+          <details className="mt-3 max-w-[80ch]">
+            <summary className="hf-label cursor-pointer">What the dry run checks</summary>
+            <p className="hf-note mt-3">
+              This sends the identical call with no value. The contract checks value last, so the
+              simulation exercises deterministic refusals before stopping at the missing stake.
+              Archive-dependent checks still require the funded call.
+            </p>
+          </details>
 
           <div className="mt-4 flex flex-wrap items-center gap-4">
             <button

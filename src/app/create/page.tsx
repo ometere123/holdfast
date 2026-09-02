@@ -24,17 +24,19 @@ export default async function CreatePage() {
       <p className="hf-label">New bond</p>
       <h1 className="hf-display mt-1">Stake on a sentence you published</h1>
 
-      <p className="hf-body mt-4 max-w-[80ch]">
-        You name a page, quote the commitment on it, and deposit value against it for a term. From
-        then on anyone at all can ask the contract to read that page as the Internet Archive recorded
-        it and record what the archived text says. If two consecutive faithful captures read as
-        weaker or silent on the commitment, the stake is claimable by the payee you name here.
+      <p className="hf-body mt-4 max-w-[70ch]">
+        Name a page, quote its commitment, and deposit value for a fixed term. Anyone can then ask
+        the contract to compare faithful archive captures; two consecutive weaker or silent readings
+        make the stake claimable by the payee.
       </p>
 
-      <p className="hf-note mt-3 max-w-[80ch]">
-        The live page is never the evidence. Nothing you do to the page after bonding it changes what
-        the archive already recorded, and nothing the archive fails to record counts against you.
-      </p>
+      <details className="mt-4 max-w-[80ch]">
+        <summary className="hf-label hf-label-ink cursor-pointer">Why this matters</summary>
+        <p className="hf-note mt-3">
+          The live page is never the evidence. Later edits cannot change what the archive recorded,
+          and an archive failure never counts against the commitment.
+        </p>
+      </details>
 
       {limitsRead.kind === "AVAILABLE" ? (
         <p className="hf-record-sm mt-4">
