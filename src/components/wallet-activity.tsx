@@ -38,13 +38,13 @@ export function WalletActivity({ read }: { read: WalletActivityRead }) {
         not a complete transaction history.
       </p>
 
-      {wallet.mode !== "injected" || !wallet.address ? (
-        <p className="hf-note mt-5 border p-4" style={{ borderColor: "var(--rule-strong)" }}>
-          Connect a wallet to see bonds where this address is the promisor or payee.
-        </p>
-      ) : read.kind === "unavailable" ? (
+      {read.kind === "unavailable" ? (
         <p className="hf-note mt-5 border p-4" style={{ borderColor: "var(--diazo)" }}>
           Live Holdfast data is currently unavailable. {read.message}
+        </p>
+      ) : wallet.mode !== "injected" || !wallet.address ? (
+        <p className="hf-note mt-5 border p-4" style={{ borderColor: "var(--rule-strong)" }}>
+          Connect a wallet to see bonds where this address is the promisor or payee.
         </p>
       ) : (
         <div className="mt-5">
