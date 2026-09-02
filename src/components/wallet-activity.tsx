@@ -49,7 +49,7 @@ export function WalletActivity({ read }: { read: WalletActivityRead }) {
       ) : (
         <div className="mt-5">
           {read.mode === "fixtures" ? (
-            <p className="hf-record-sm mb-3">Fixture bond register — not chain state.</p>
+            <p className="hf-record-sm mb-3">Fixture bond register - not chain state.</p>
           ) : null}
           {read.bonds.filter((bond) => roleFor(bond, wallet.address!).length > 0).length === 0 ? (
             <p className="hf-note border p-4" style={{ borderColor: "var(--rule-strong)" }}>
