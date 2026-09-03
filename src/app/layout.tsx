@@ -63,17 +63,39 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </p>
 
               <header className="pt-8 pb-5">
-                <div className="flex flex-col gap-5 strip:flex-row strip:items-start strip:justify-between">
-                  <div>
-                    <Link href="/" className="hf-display block no-underline">
-                      Holdfast
-                    </Link>
-                    <p className="hf-note mt-1 max-w-[64ch]">
-                      A bond staked on a sentence somebody published, checked against the archived
-                      record of the page it was published on, by anyone, from a button.
-                    </p>
+                <div className="hf-hero">
+                  <div className="flex flex-col gap-5 strip:flex-row strip:items-start strip:justify-between">
+                    <div>
+                      <Link href="/" className="hf-display block no-underline">
+                        Holdfast
+                      </Link>
+                      <p className="hf-note mt-1 max-w-[64ch]">
+                        A bond staked on a sentence somebody published, checked against the archived
+                        record of the page it was published on, by anyone, from a button.
+                      </p>
+                    </div>
+                    <WalletControl />
                   </div>
-                  <WalletControl />
+                  <svg viewBox="0 0 120 120" className="hf-hero-mark" aria-hidden="true" role="presentation">
+                    <circle cx="60" cy="60" r="46" fill="none" className="hf-hero-ring" />
+                    <circle cx="60" cy="60" r="30" fill="none" className="hf-hero-ring" />
+                    {Array.from({ length: 8 }).map((_, index) => {
+                      const angle = (index / 8) * Math.PI * 2;
+                      const inner = 30;
+                      const outer = index % 2 === 0 ? 54 : 46;
+                      return (
+                        <line
+                          key={index}
+                          x1={60 + Math.cos(angle) * inner}
+                          y1={60 + Math.sin(angle) * inner}
+                          x2={60 + Math.cos(angle) * outer}
+                          y2={60 + Math.sin(angle) * outer}
+                          className="hf-hero-spoke"
+                        />
+                      );
+                    })}
+                    <circle cx="60" cy="60" r="5" className="hf-hero-hub" />
+                  </svg>
                 </div>
 
                 <nav className="mt-6" aria-label="Sections">

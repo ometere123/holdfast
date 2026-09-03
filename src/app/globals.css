@@ -150,6 +150,52 @@ body {
 }
 
 /* --------------------------------------------------------------------------
+   Hero. A compass rose stands beside the masthead on wide screens -- a
+   bearing held fast, which is what a holdfast is for. Purely decorative
+   (aria-hidden) and dropped below the strip breakpoint rather than
+   crowding the title and wallet control.
+   -------------------------------------------------------------------------- */
+
+.hf-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.hf-hero > div:first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.hf-hero-mark {
+  width: 84px;
+  height: 84px;
+  flex-shrink: 0;
+}
+
+.hf-hero-ring {
+  stroke: var(--rule-strong);
+  stroke-width: 1.5;
+}
+
+.hf-hero-spoke {
+  stroke: var(--diazo);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+
+.hf-hero-hub {
+  fill: var(--emulsion);
+}
+
+@media (max-width: 759.98px) {
+  .hf-hero-mark {
+    display: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
    The chart table: the one surface a live (unfixed) reading may appear on.
    -------------------------------------------------------------------------- */
 
