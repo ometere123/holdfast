@@ -1,56 +1,53 @@
+@import url("https://fonts.googleapis.com/css2?family=Bitter:wght@500;600;700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap");
 @import "tailwindcss";
 
 /* ==========================================================================
-   Holdfast: microform archive retrieval.
+   Holdfast — a ship's log.
 
-   Every other system in this set is printed on paper. This one is projected on
-   the lit ground glass of a microform reader, because an archived snapshot is
-   an image of a document that no longer exists in that form.
+   The previous system projected everything on a microform reader's ground
+   glass: cool grey, violet "diazo" ink for archival evidence, a film-strip
+   of frames. This system is a bosun's logbook instead — a holdfast is the
+   deck fitting a line is made off to so it cannot slip — warm aged chart
+   paper, indigo log-ink, and a brass stamp for evidence that has been
+   fixed against the archive. Every class name below is the one the page
+   already requests; only the ink changed.
 
-   Two classes of evidence, and the palette refuses to let them look alike.
-   Anything read from an immutable archived frame is FIXED: full saturation
-   diazo violet, 7.59:1 on the glass, so it may carry body text anywhere.
-   Anything read from the live web is UNFIXED: 3.73:1 on the glass, which
-   fails, and 5.21:1 on the light table, which passes. A live reading is
-   therefore physically unable to be presented with the authority of an
-   archived one, and that fell out of the contrast arithmetic rather than
-   being a house rule.
+   The trust distinction the old system enforced by contrast arithmetic is
+   kept, not decorated away: FIXED (an immutable archived capture) is brass
+   at full strength and may carry text anywhere. UNFIXED (a live-web
+   reading) is a duller slate and is only ever painted inside the chart
+   table, never loose on the page, so a live reading can never borrow an
+   archived one's authority.
    ========================================================================== */
 
 @theme inline {
-  --color-glass: #c9d0d0;
-  --color-gate: #aeb6b6;
-  --color-emulsion: #16191b;
-  --color-diazo: #332b7a;
-  --color-unfixed: #6b6459;
-  --color-lighttable: #edf3f4;
+  --color-glass: #efe7d3;
+  --color-gate: #cdbf9c;
+  --color-emulsion: #1c2b3a;
+  --color-diazo: #9c6b23;
+  --color-unfixed: #5b6b74;
+  --color-lighttable: #f8f2e2;
 
   --font-display: var(--face-zilla), Rockwell, "Bookman Old Style", Georgia, serif;
   --font-body: var(--face-atkinson), Verdana, "DejaVu Sans", Tahoma, sans-serif;
   --font-record: var(--face-iosevka), "Cascadia Mono", Consolas, "DejaVu Sans Mono", monospace;
 
-  /* The strip runs horizontally at or above this width and vertically below it. */
   --breakpoint-strip: 760px;
 }
 
 :root {
-  /* System first release stack: no build time dependency on a font CDN. Each
-     fallback is chosen for the same property the named face was chosen for.
-     Rockwell is a slab. Verdana was drawn for glyph disambiguation, which is
-     why Atkinson Hyperlegible is here in the first place. Cascadia Mono and
-     Consolas are narrow enough to set a 32 character digest without wrapping. */
-  --face-zilla: "Zilla Slab";
-  --face-atkinson: "Atkinson Hyperlegible Next", "Atkinson Hyperlegible";
-  --face-iosevka: "Iosevka Fixed", "Iosevka";
+  --face-zilla: "Bitter", Georgia, serif;
+  --face-atkinson: "Public Sans", "Segoe UI", system-ui, sans-serif;
+  --face-iosevka: "IBM Plex Mono", "Cascadia Mono", Consolas, monospace;
 
-  --glass: #c9d0d0;
-  --gate: #aeb6b6;
-  --emulsion: #16191b;
-  --diazo: #332b7a;
-  --unfixed: #6b6459;
-  --lighttable: #edf3f4;
+  /* Aged chart paper, indigo log-ink, a brass stamp. */
+  --glass: #efe7d3;
+  --gate: #cdbf9c;
+  --emulsion: #1c2b3a;
+  --diazo: #9c6b23;
+  --unfixed: #5b6b74;
+  --lighttable: #f8f2e2;
 
-  /* Frame width 68px, sprocket rail 9px, no radius above 1px. Spacing base 4. */
   --frame-w: 68px;
   --frame-h: 44px;
   --rail-h: 9px;
@@ -59,6 +56,9 @@
   --rule-strong: color-mix(in srgb, var(--emulsion) 34%, transparent);
   --emulsion-72: color-mix(in srgb, var(--emulsion) 72%, var(--glass));
   --emulsion-55: color-mix(in srgb, var(--emulsion) 55%, var(--glass));
+
+  --shadow-log: 0 1px 2px color-mix(in srgb, var(--emulsion) 8%, transparent),
+    0 10px 26px color-mix(in srgb, var(--emulsion) 10%, transparent);
 }
 
 * {
@@ -81,22 +81,22 @@ body {
 }
 
 /* --------------------------------------------------------------------------
-   Type scale: 11 · 13 · 16 · 20 · 34. Nothing else.
+   Type scale
    -------------------------------------------------------------------------- */
 
 .hf-display {
   font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 34px;
-  line-height: 38px;
+  font-weight: 700;
+  font-size: 32px;
+  line-height: 1.2;
   letter-spacing: -0.005em;
 }
 
 .hf-heading {
   font-family: var(--font-display);
   font-weight: 600;
-  font-size: 20px;
-  line-height: 26px;
+  font-size: 19px;
+  line-height: 1.35;
 }
 
 .hf-body {
@@ -111,6 +111,7 @@ body {
   font-weight: 400;
   font-size: 13px;
   line-height: 20px;
+  color: var(--emulsion-72);
 }
 
 .hf-record {
@@ -129,7 +130,6 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* A catalogue label. Archival register: lower case, letterspaced, quiet. */
 .hf-label {
   font-family: var(--font-body);
   font-weight: 600;
@@ -144,23 +144,18 @@ body {
   color: var(--emulsion);
 }
 
-/* Fixed evidence: read from an immutable archived frame. 7.59:1 on the glass. */
+/* Fixed evidence: an immutable archived capture, stamped in brass. */
 .hf-diazo {
   color: var(--diazo);
 }
 
 /* --------------------------------------------------------------------------
-   The light table, and the one place a live reading may be read.
-
-   .hf-unfixed has no unscoped rule on purpose. --unfixed measures 3.73:1 on
-   the glass, which fails body text, and 5.21:1 on the light table, which
-   passes. So the only selector that paints it is nested inside the light
-   table. Used anywhere else the class inherits --emulsion and the value reads
-   as ordinary text, which is a loud mistake rather than a quiet illegible one.
+   The chart table: the one surface a live (unfixed) reading may appear on.
    -------------------------------------------------------------------------- */
 
 .hf-lighttable {
   background: var(--lighttable);
+  border-radius: 10px;
 }
 
 .hf-lighttable .hf-unfixed {
@@ -168,48 +163,28 @@ body {
 }
 
 /* --------------------------------------------------------------------------
-   The frame strip.
-
-   Four kinds of cell, and the pair that must never be confusable is
-   "unchanged" and "blank". They differ on five independent axes, any one of
-   which is enough on its own:
-
-     1. interior     unchanged carries an emulsion field; blank carries
-                     nothing at all, so the page ground shows through it
-     2. border       unchanged is solid; blank is dashed
-     3. collapse     unchanged frames fold into a run band; a blank frame is
-                     never collapsed at any width, so it always keeps its own
-                     position and its own frame number
-     4. caption      printed under every cell, never empty, never colour alone
-     5. accessible   name each cell states its kind in words
-
-   A fifth cell kind, "arriving", exists only while a write is in flight. It
-   is solid bordered with a latent diazo wash and carries no frame number,
-   because a capture that has not resolved has no timestamp yet. That keeps it
-   off both axes 1 and 2 relative to a blank frame.
+   The log strip. Five cell kinds, still told apart on the same five axes:
+   interior, border, collapse behaviour, caption and accessible name.
    -------------------------------------------------------------------------- */
 
 .hf-rail {
   height: var(--rail-h);
-  background-color: var(--gate);
-  background-image: radial-gradient(
-    circle at 6px calc(var(--rail-h) / 2),
-    var(--glass) 2.2px,
-    transparent 2.4px
+  background: repeating-linear-gradient(
+    90deg,
+    var(--gate) 0 10px,
+    color-mix(in srgb, var(--gate) 60%, var(--glass)) 10px 12px
   );
-  background-size: 12px var(--rail-h);
+  border-radius: 999px;
 }
 
-/* Below 760px the rails run down the sides instead of across the top. */
 .hf-rail-v {
   width: var(--rail-h);
-  background-color: var(--gate);
-  background-image: radial-gradient(
-    circle at calc(var(--rail-h) / 2) 6px,
-    var(--glass) 2.2px,
-    transparent 2.4px
+  background: repeating-linear-gradient(
+    180deg,
+    var(--gate) 0 10px,
+    color-mix(in srgb, var(--gate) 60%, var(--glass)) 10px 12px
   );
-  background-size: var(--rail-h) 12px;
+  border-radius: 999px;
 }
 
 .hf-cell {
@@ -228,17 +203,18 @@ body {
   position: relative;
   height: var(--frame-h);
   border: 1px solid var(--gate);
-  background: var(--glass);
+  border-radius: 8px;
+  background: var(--lighttable);
 }
 
-/* The exposed image inside a frame. Absent entirely from a blank frame. */
 .hf-cell-field {
   position: absolute;
   inset: 3px;
   background: var(--emulsion);
+  border-radius: 5px;
 }
 
-/* Baseline: notched. A real corner cut, not a badge. */
+/* Baseline: a notched corner, the log's own first stamp. */
 .hf-cell-baseline .hf-cell-window {
   border-color: var(--emulsion);
 }
@@ -247,16 +223,15 @@ body {
   clip-path: polygon(0 34%, 34% 0, 100% 0, 100% 100%, 0 100%);
 }
 
-/* Unchanged: dimmed, because a hundred identical frames are one fact. */
 .hf-cell-unchanged .hf-cell-field {
   background: var(--emulsion-55);
 }
 
-/* Differs: double ruled in diazo and pulled forward. */
+/* Differs: ringed in brass and pulled forward, like a flagged log entry. */
 .hf-cell-differs .hf-cell-window {
   border-color: var(--diazo);
   box-shadow:
-    inset 0 0 0 3px var(--glass),
+    inset 0 0 0 3px var(--lighttable),
     inset 0 0 0 4px var(--diazo);
   height: calc(var(--frame-h) + 8px);
   margin-top: -8px;
@@ -266,16 +241,15 @@ body {
   inset: 6px;
 }
 
-/* Blank: dashed outline, empty glass, frame number kept. Nothing was read. */
+/* Blank: dashed, empty, the entry number kept. Nothing was read. */
 .hf-cell-blank .hf-cell-window {
   border-style: dashed;
   border-color: var(--gate);
   background: var(--glass);
 }
 
-/* Arriving: a latent wash and no frame number. Only ever in flight. */
 .hf-cell-arriving .hf-cell-window {
-  background: color-mix(in srgb, var(--diazo) 10%, var(--glass));
+  background: color-mix(in srgb, var(--diazo) 12%, var(--lighttable));
 }
 
 .hf-cell[aria-pressed="true"] .hf-cell-window {
@@ -283,11 +257,11 @@ body {
   outline-offset: 2px;
 }
 
-/* A collapsed run of unchanged frames. Filled like the frames it stands for. */
 .hf-run-band {
   height: var(--frame-h);
   border: 1px solid var(--gate);
-  background: var(--glass);
+  border-radius: 8px;
+  background: var(--lighttable);
   position: relative;
 }
 
@@ -296,9 +270,9 @@ body {
   position: absolute;
   inset: 3px;
   background: var(--emulsion-55);
+  border-radius: 5px;
 }
 
-/* The cursor frame, highlighted while the reel is idle. */
 .hf-cell-cursor .hf-cell-window::after {
   content: "";
   position: absolute;
@@ -306,11 +280,12 @@ body {
   right: -1px;
   bottom: -5px;
   height: 2px;
-  background: var(--emulsion);
+  background: var(--diazo);
+  border-radius: 999px;
 }
 
 /* --------------------------------------------------------------------------
-   Motion. The reel advances, it does not spin.
+   Motion. The log advances entry by entry; it does not spin.
    -------------------------------------------------------------------------- */
 
 .hf-advancing .hf-cell {
@@ -321,7 +296,7 @@ body {
 @keyframes hf-land {
   from {
     opacity: 0;
-    transform: translateX(-6px);
+    transform: translateY(4px);
   }
   to {
     opacity: 1;
@@ -342,7 +317,6 @@ body {
   }
 }
 
-/* The active consensus stage breathes. It never spins, and nothing flashes. */
 .hf-stage-active {
   animation: hf-breathe 2600ms ease-in-out infinite;
 }
@@ -376,13 +350,13 @@ body {
 }
 
 /* --------------------------------------------------------------------------
-   Focus, in this system's own ink, never a browser default outline.
+   Focus, in the log's own ink.
    -------------------------------------------------------------------------- */
 
 :focus-visible {
-  outline: 2px solid var(--emulsion);
+  outline: 2px solid var(--diazo);
   outline-offset: 2px;
-  border-radius: 1px;
+  border-radius: 4px;
 }
 
 .hf-skip {
@@ -392,6 +366,7 @@ body {
   z-index: 60;
   background: var(--glass);
   border: 1px solid var(--emulsion);
+  border-radius: 8px;
   padding: 10px 16px;
   transition: top 120ms ease-out;
 }
@@ -401,8 +376,7 @@ body {
 }
 
 /* --------------------------------------------------------------------------
-   Controls. A rule, a ground, and a label. No gradient, no shadow at rest,
-   no radius above 1px anywhere.
+   Controls
    -------------------------------------------------------------------------- */
 
 .hf-btn,
@@ -410,20 +384,18 @@ body {
 .hf-btn-diazo {
   font-family: var(--font-body);
   font-weight: 600;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 14px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  padding: 11px 16px;
+  letter-spacing: 0.02em;
+  padding: 10px 18px;
   border: 1px solid var(--emulsion);
   color: var(--emulsion);
   background: transparent;
   cursor: pointer;
   text-align: left;
-  border-radius: 1px;
-  transition:
-    background-color 120ms ease-out,
-    color 120ms ease-out;
+  border-radius: 10px;
+  transition: background-color 140ms ease-out, color 140ms ease-out,
+    border-color 140ms ease-out, transform 100ms ease-out;
 }
 
 .hf-btn {
@@ -432,7 +404,11 @@ body {
 }
 
 .hf-btn:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--emulsion) 82%, var(--glass));
+  background: color-mix(in srgb, var(--emulsion) 84%, var(--glass));
+}
+
+.hf-btn:active:not(:disabled) {
+  transform: translateY(1px);
 }
 
 .hf-btn-quiet {
@@ -447,10 +423,11 @@ body {
 .hf-btn-diazo {
   border-color: var(--diazo);
   color: var(--diazo);
+  background: color-mix(in srgb, var(--diazo) 6%, transparent);
 }
 
 .hf-btn-diazo:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--diazo) 8%, transparent);
+  background: color-mix(in srgb, var(--diazo) 14%, transparent);
 }
 
 .hf-btn:disabled,
@@ -464,15 +441,24 @@ body {
 .hf-select,
 .hf-textarea {
   width: 100%;
-  background: color-mix(in srgb, var(--lighttable) 70%, var(--glass));
+  background: var(--lighttable);
   border: 1px solid var(--rule-strong);
-  border-radius: 1px;
-  padding: 9px 10px;
+  border-radius: 8px;
+  padding: 9px 12px;
   color: var(--emulsion);
   font-family: var(--font-record);
   font-size: 13px;
   line-height: 19px;
   font-variant-numeric: tabular-nums;
+  transition: border-color 120ms ease-out, box-shadow 120ms ease-out;
+}
+
+.hf-input:focus,
+.hf-select:focus,
+.hf-textarea:focus {
+  outline: none;
+  border-color: var(--diazo);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--diazo) 16%, transparent);
 }
 
 .hf-select {
@@ -486,7 +472,6 @@ body {
   resize: vertical;
 }
 
-/* Linework only. gate on glass is 1.32:1 and never carries text. */
 .hf-rule {
   border-top: 1px solid var(--rule);
 }
@@ -496,18 +481,14 @@ body {
 }
 
 /* --------------------------------------------------------------------------
-   The consensus stage rail: one bar per stage, drawn as a strip of its own.
-
-   The retryable stages borrow the blank frame's dashed hatching for exactly
-   the reason the blank frame has it: nothing was recorded. A rejection is a
-   verdict and gets a filled bar, so "the round did not resolve" and "the round
-   resolved against you" are told apart by fill and not by wording alone.
+   The consensus stage rail
    -------------------------------------------------------------------------- */
 
 .hf-stage-bar {
   height: 6px;
+  border-radius: 999px;
   border: 1px solid var(--rule-strong);
-  background: color-mix(in srgb, var(--emulsion) 10%, transparent);
+  background: color-mix(in srgb, var(--emulsion) 8%, var(--lighttable));
 }
 
 .hf-stage-done .hf-stage-bar {
@@ -530,16 +511,17 @@ body {
   );
 }
 
-/* Refusal tags. Dashed for the ones where nothing was read or recorded. */
 .hf-tag {
   display: inline-block;
   border: 1px solid var(--rule-strong);
-  padding: 0 6px;
-  border-radius: 1px;
+  border-radius: 999px;
+  padding: 1px 10px;
+  background: var(--lighttable);
 }
 
 .hf-tag-open {
   border-style: dashed;
+  background: transparent;
 }
 
 .hf-tag-verdict {
@@ -548,19 +530,7 @@ body {
 }
 
 /* --------------------------------------------------------------------------
-   The strip below 760px: it runs down the page, oldest at the top, and the
-   caption moves alongside each frame instead of underneath it.
-
-   These overrides are written as descendant selectors rather than as Tailwind
-   utilities on the elements, because everything in this file is unlayered and
-   therefore outranks `@layer utilities` no matter what order they appear in.
-   A `w-full` on .hf-cell would silently lose.
-
-   The width test lives here rather than in the component, and .hf-strip-v is
-   therefore safe to render unconditionally. Tailwind's `strip:` variant applies
-   only to Tailwind utilities, so there is no `strip:hf-strip-v` to write, and
-   the alternative is a matchMedia hook that has no answer during the server
-   render and would lay the strip out the wrong way for the first paint.
+   The strip below 760px
    -------------------------------------------------------------------------- */
 
 @media (max-width: 759.98px) {
@@ -577,8 +547,6 @@ body {
     min-width: var(--frame-w);
   }
 
-  /* The pull forward on a differing frame is horizontal language. Down the page
-     it would read as two frames overlapping, so it is dropped here. */
   .hf-strip-v .hf-cell-differs .hf-cell-window {
     margin-top: 0;
   }
@@ -590,6 +558,6 @@ body {
 }
 
 ::selection {
-  background: color-mix(in srgb, var(--diazo) 20%, transparent);
+  background: color-mix(in srgb, var(--diazo) 24%, transparent);
   color: var(--emulsion);
 }
