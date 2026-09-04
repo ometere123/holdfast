@@ -1,3 +1,5 @@
+import { normalizeError } from "../wallet-errors.ts";
+
 export type ReadFailureKind = "UNAVAILABLE" | "INVALID_RESPONSE";
 
 export type ReadResult<T> =
@@ -9,7 +11,7 @@ export const available = <T>(value: T): ReadResult<T> => ({ kind: "AVAILABLE", v
 export const notFound = <T>(): ReadResult<T> => ({ kind: "NOT_FOUND" });
 export const unavailable = <T>(error: unknown): ReadResult<T> => ({
   kind: "UNAVAILABLE",
-  error: error instanceof Error ? error.message : String(error),
+  error: normalizeError(error),
 });
 export const invalidResponse = <T>(error: string): ReadResult<T> => ({
   kind: "INVALID_RESPONSE",

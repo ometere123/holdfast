@@ -39,6 +39,7 @@ import {
   type BondDraft,
 } from "@/lib/validate";
 import { explorerTxUrl } from "@/lib/genlayer/config";
+import { normalizeError } from "@/lib/wallet-errors";
 import { PhaseStrip } from "./phase-strip";
 import { ProgramTable } from "./program-table";
 import { useWallet } from "./wallet-provider";
@@ -98,7 +99,7 @@ export function CreateForm({ limits }: { limits?: Limits }) {
       const client = wallet.canWrite ? await wallet.getWriteClient() : undefined;
       setDry(await dryRunCreateBond(createArgs(draft), client));
     } catch (error) {
-      setDry(classifyDryRun({ thrown: error instanceof Error ? error.message : String(error) }));
+      setDry(classifyDryRun({ thrown: normalizeError(error) }));
     } finally {
       setSimulating(false);
     }

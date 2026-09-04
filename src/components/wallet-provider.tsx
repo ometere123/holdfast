@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { createInjectedClient } from "@/lib/genlayer/client";
 import { chain, CHAIN_NAME } from "@/lib/genlayer/config";
 import { purgeLegacyGeneratedKey } from "@/lib/storage";
+import { normalizeError } from "@/lib/wallet-errors";
 import {
   chainIdHex,
   DISCONNECTED,
@@ -51,32 +52,66 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   //
   // The same pass deletes anything an earlier generated-wallet build left behind. Holdfast
   // supports injected wallets only, and legacy key material is removed rather than migrated.
+  //
+  // WHY THIS RETRIES RATHER THAN CHECKING ONCE. `window.ethereum` is not guaranteed to exist
+  // the instant this component's first effect runs: several wallet extensions inject it
+  // asynchronously, after their own content script has loaded, which can land after this
+  // effect on a full page load (a fresh tab, a typed URL, a reload) even though it never loses
+  // the race on a client-side route change, where the page's scripts do not reload at all. A
+  // single synchronous check is what "wallet forgets the connection on some routes but not
+  // others" looks like from outside: the route itself is not the cause, but a full navigation
+  // is the one thing that puts this effect in a race it can lose. Retrying for a couple of
+  // seconds, and listening for the `ethereum#initialized` event several wallets dispatch when
+  // injection finishes, closes that window without ever polling forever.
   useEffect(() => {
     let cancelled = false;
-    const provider = window.ethereum;
-    queueMicrotask(() => {
-      if (cancelled) return;
-      setHasInjected(Boolean(provider));
-      purgeLegacyGeneratedKey();
-    });
-    if (!provider) return () => { cancelled = true; };
+    let attempts = 0;
 
-    // Restore only an account the provider has already exposed to this origin. This is passive
-    // session discovery, not eth_requestAccounts: a wallet connected before the page loaded is
-    // usable on its first write while a fresh page still never asks for consent on its own.
-    void (async () => {
+    const detect = () => window.ethereum;
+
+    const restoreSession = async (provider: NonNullable<typeof window.ethereum>) => {
       try {
         const accounts = (await provider.request({ method: "eth_accounts" })) as `0x${string}`[];
         if (!accounts?.[0] || cancelled) return;
         const chainId = parseChainId(await provider.request({ method: "eth_chainId" }));
         if (!cancelled) {
-          setWallet(nextWalletState(DISCONNECTED, { type: "connected", address: accounts[0], chainId }));
+          setWallet((current) =>
+            current.mode === "injected"
+              ? current
+              : nextWalletState(DISCONNECTED, { type: "connected", address: accounts[0], chainId }),
+          );
         }
       } catch {
         // Passive discovery is best effort. The explicit connect button remains the recovery path.
       }
-    })();
-    return () => { cancelled = true; };
+    };
+
+    const tryDetect = () => {
+      if (cancelled) return;
+      const provider = detect();
+      if (provider) {
+        setHasInjected(true);
+        void restoreSession(provider);
+        return;
+      }
+      attempts += 1;
+      // ~10 tries over 2 seconds: enough to clear a real injection race, never a visible stall.
+      if (attempts < 10) setTimeout(tryDetect, 200);
+    };
+
+    queueMicrotask(() => {
+      if (cancelled) return;
+      purgeLegacyGeneratedKey();
+      tryDetect();
+    });
+
+    const onInitialized = () => tryDetect();
+    window.addEventListener("ethereum#initialized", onInitialized, { once: true });
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener("ethereum#initialized", onInitialized);
+    };
   }, []);
 
   // Follow the wallet for as long as a session is open. All three events matter: the address
@@ -123,7 +158,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       // The wallet answers with `chainChanged`, which the listener above records. Asking
       // again here would only duplicate what the event already says.
     } catch (caught) {
-      const message = caught instanceof Error ? caught.message : String(caught);
+      const message = normalizeError(caught);
       setWallet((current) => ({
         ...current,
         error: `This wallet would not switch to ${CHAIN_NAME} (chain ${chain.id}): ${message} Add the network in the wallet itself, then connect again.`,
@@ -160,7 +195,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         await switchNetwork();
       }
     } catch (caught) {
-      const message = caught instanceof Error ? caught.message : String(caught);
+      const message = normalizeError(caught);
       setWallet((current) => nextWalletState(current, { type: "connection-refused", message }));
     } finally {
       setConnecting(false);

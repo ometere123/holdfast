@@ -31,6 +31,7 @@ import type {
 } from "./contract-types.ts";
 import { CONTRACT_ADDRESS } from "./genlayer/config.ts";
 import { createReadClient } from "./genlayer/read-client.ts";
+import { normalizeError } from "./wallet-errors.ts";
 import {
   available,
   invalidResponse,
@@ -71,7 +72,7 @@ function hasKeys(value: unknown, keys: string[]): value is Record<string, unknow
 const NO_SUCH_BOND = "no bond";
 
 function looksLikeMissingBond(error: unknown): boolean {
-  const message = error instanceof Error ? error.message : String(error);
+  const message = normalizeError(error);
   return message.includes(NO_SUCH_BOND);
 }
 

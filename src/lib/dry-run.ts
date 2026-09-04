@@ -32,6 +32,7 @@ import type { CalldataEncodable } from "genlayer-js/types";
 import { CONTRACT_ADDRESS, IS_LIVE } from "./genlayer/config.ts";
 import { createReadClient } from "./genlayer/read-client.ts";
 import { findRefusal, reasonAfterTag } from "./revert-tags.ts";
+import { normalizeError } from "./wallet-errors.ts";
 
 /** The refusal that means every other deterministic check passed. Matched, not guessed. */
 export const STAKE_REFUSAL = "a bond needs a stake; this call carried no value";
@@ -176,6 +177,6 @@ export async function dryRunCreateBond(
     });
     return classifyDryRun({ returned });
   } catch (error) {
-    return classifyDryRun({ thrown: error instanceof Error ? error.message : String(error) });
+    return classifyDryRun({ thrown: normalizeError(error) });
   }
 }

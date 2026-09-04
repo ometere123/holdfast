@@ -18,6 +18,7 @@ import { waitAccepted, writeContract } from "@/lib/genlayer/tx";
 import type { WritePhase } from "@/lib/contract-types";
 import type { OutcomeClass } from "@/lib/lifecycle";
 import { findRefusal } from "@/lib/revert-tags";
+import { normalizeError } from "@/lib/wallet-errors";
 import { useTransactions } from "./transaction-provider";
 import { useWallet } from "./wallet-provider";
 
@@ -98,7 +99,7 @@ function classify(message: string): OutcomeClass {
  * saying so is the difference between a dead end and a next step.
  */
 function writeErrorMessage(error: unknown) {
-  const message = error instanceof Error ? error.message : String(error);
+  const message = normalizeError(error);
   if (message.includes("does not support") || message.includes("Unsupported method")) {
     const stated = message.replace(/[\s.]+$/, "");
     return `${stated}. Some injected wallets do not implement the GenLayer RPC methods. A wallet that speaks them is required to sign this call.`;
