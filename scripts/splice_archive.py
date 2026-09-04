@@ -40,7 +40,12 @@ import traceback
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 PROJECT = os.path.dirname(HERE)
-REPO = os.path.dirname(PROJECT)
+# The archive suite this splices from is committed inside this repo, at
+# _build/holdfast-archive/, precisely so a fresh clone (and CI) can verify the splice without
+# a sibling workspace this repo does not control. REPO is this repo's own root, not its parent:
+# an earlier version pointed one level up, at a local development convenience copy that exists
+# only on one machine, which is why this check had never once run in CI before this pass.
+REPO = PROJECT
 
 SOURCE = os.path.join(REPO, "_build", "holdfast-archive", "archive.py")
 SUITE_DIR = os.path.join(REPO, "_build", "holdfast-archive")

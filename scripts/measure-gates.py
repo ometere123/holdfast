@@ -28,10 +28,10 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-# The offline archive suite lives one level above this repo, shared across sibling projects
-# the same way conveyance's does at ../_build/conveyance-rdap. Matches SUITE_DIR in
-# scripts/splice_archive.py, which resolves it the same way for the same reason.
-SUITE_DIR = str(ROOT.parent / "_build" / "holdfast-archive")
+# _build/holdfast-archive/ is committed inside this repo, precisely so a fresh clone and CI can
+# run this without a workspace this repo does not own. Matches SUITE_DIR in
+# scripts/splice_archive.py.
+SUITE_DIR = str(ROOT / "_build" / "holdfast-archive")
 OUT = ROOT / "evidence" / "gate-measurements.json"
 
 
