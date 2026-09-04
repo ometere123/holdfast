@@ -41,6 +41,20 @@ jobs:
           echo "${GENVM_SDK_SHA256}  ${HOME}/.cache/gltest-direct/genvm-universal-v0.2.16.tar.xz" \
             | sha256sum -c -
       - run: npm run verify:emdash
+      - run: npm run verify:splice
+      - run: npm run verify:gates
+      - name: Verify deployed source matches contracts/Holdfast.py (canonical StudioNet deployment)
+        env:
+          NEXT_PUBLIC_HOLDFAST_CONTRACT: "0x0D656F1A319Dad705eeE9CF25045CF22a05776B9"
+          NEXT_PUBLIC_GENLAYER_ENDPOINT: "https://studio.genlayer.com/api"
+          NEXT_PUBLIC_GENLAYER_CHAIN: "studionet"
+        run: npm run verify:deployment
+      - name: Verify the canonical deployment's method schema
+        env:
+          NEXT_PUBLIC_HOLDFAST_CONTRACT: "0x0D656F1A319Dad705eeE9CF25045CF22a05776B9"
+          NEXT_PUBLIC_GENLAYER_ENDPOINT: "https://studio.genlayer.com/api"
+          NEXT_PUBLIC_GENLAYER_CHAIN: "studionet"
+        run: npm run verify:schema
       - run: npm run typecheck
       - run: npm run lint
       - run: npm test

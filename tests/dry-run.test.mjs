@@ -1,7 +1,7 @@
 /**
  * The zero-value simulation, and the one classification mistake that would cost a stake.
  *
- * The contract's value check is deliberately the last deterministic check (`Holdfast.py:2593`), so
+ * The contract's value check is deliberately the last deterministic check (`Holdfast.py:2605`), so
  * reaching it means nothing above it objected. That is the whole reason a call with no value is a
  * usable simulation of a call with value.
  *

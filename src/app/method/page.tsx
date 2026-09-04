@@ -107,7 +107,7 @@ export default async function MethodPage() {
           contract reverted anyway at first, on an argument that sounded sufficient: every check in{" "}
           <span className="hf-record">create_bond</span> is deterministic and runs before the first
           network call, so a caller can simulate the same call with no value attached and learn the
-          answer for free. The value check is deliberately the last of them (Holdfast.py:2593), which
+          answer for free. The value check is deliberately the last of them (Holdfast.py:2605), which
           is what lets that simulation reach every other refusal first.
         </p>
         <p className="hf-note mt-2 max-w-[76ch]">

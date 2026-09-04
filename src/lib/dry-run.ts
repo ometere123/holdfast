@@ -2,7 +2,7 @@
  * Simulating `create_bond` with no value attached, before any value is sent.
  *
  * The trick is that the contract's own value check is deliberately the LAST deterministic check
- * (`Holdfast.py:2593`). So a call with zero value runs every other deterministic refusal first and
+ * (`Holdfast.py:2605`). So a call with zero value runs every other deterministic refusal first and
  * can only stop at the value check. Reaching that specific refusal is therefore a positive result:
  * it means nothing else objected.
  *

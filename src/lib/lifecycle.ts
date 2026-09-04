@@ -373,7 +373,7 @@ export const EXPIRE_PROGRAM: ProgramStep[] = [
 /**
  * There is no `renew_bond` row, because there is no such method.
  *
- * `Holdfast.py:3129` leaves it out and says why: renewal re-anchors the term against a new
+ * `Holdfast.py:3137` leaves it out and says why: renewal re-anchors the term against a new
  * baseline, which is the one operation that changes what a payout is measured against, and no test
  * in the suite exercises it. A program of work for a method that does not exist would print a
  * plausible table and then fail at the node after the wallet had already opened.
