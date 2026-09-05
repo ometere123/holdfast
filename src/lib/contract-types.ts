@@ -261,8 +261,8 @@ export type CommitmentReading = "HOLDS" | "WEAKENED" | "ABSENT" | "INDETERMINATE
  * fetched, whose stored-byte digest was checkable and did not check out, whose decoded pin no
  * longer reproduces, or whose reading came back unusable is NOT in this list at all.
  * `check_commitment` calls `_raise_if_error` on the admission block and lets `_classification_of`
- * raise, so any of those reverts the whole call and records nothing (`Holdfast.py:2791` and
- * `Holdfast.py:2804`). A gate rejection is therefore the only way a blank frame comes into
+ * raise, so any of those reverts the whole call and records nothing (`Holdfast.py:2833` and
+ * `Holdfast.py:2846`). A gate rejection is therefore the only way a blank frame comes into
  * existence, and `encoding` is always a real encoding on a stored point, because the bytes had to
  * decode before a gate could run on them.
  *

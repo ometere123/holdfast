@@ -103,6 +103,13 @@ NEVER_ARCHIVED_URL = "https://holdfast-never-archived.example/terms"
 
 AT = "2026-08-25T11:00:00Z"
 
+#: `REDIRECT_STAMP` is a real capture from March 2023, over three years before `AT`, which is
+#: further back than even `MAX_TERM_DAYS` reaches: a baseline-anchored term from it would already
+#: be over by any wall clock this file otherwise uses. The two redirect tests below are about the
+#: 302 being declined, not about expiry, so they run at a wall clock close to the baseline instead,
+#: comfortably inside the default term.
+REDIRECT_AT = "2023-04-01T00:00:00Z"
+
 #: A section list and terminal that are absent from the deprecation page, kept identical to the one
 #: the fixture set was measured under so `failed_gates` here can be compared to that measurement.
 #: The anchor is NOT chosen: `_derive_anchor` takes it from the last path segment, so it is
@@ -277,7 +284,7 @@ def test_a_timestamp_one_second_off_a_real_capture_is_refused_and_the_redirect_i
         ["20230501000000", "NEWERROWNEVERFETCHEDBYTHISTEST02", "5000", "200"],
     ])
     archive_server.add(REDIRECT_ROUTE)
-    set_block_time(direct_vm, AT)
+    set_block_time(direct_vm, REDIRECT_AT)
     value_ledger.fund(bonds.DEFAULT_STAKE)
 
     message = returned_refusal(
@@ -308,7 +315,7 @@ def test_the_declined_redirect_leaves_the_digest_unverified_rather_than_verified
         ["20230501000000", "NEWERROWNEVERFETCHEDBYTHISTEST02", "5000", "200"],
     ])
     archive_server.add(REDIRECT_ROUTE)
-    set_block_time(direct_vm, AT)
+    set_block_time(direct_vm, REDIRECT_AT)
     value_ledger.fund(bonds.DEFAULT_STAKE)
 
     message = returned_refusal(

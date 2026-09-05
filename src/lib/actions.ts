@@ -164,7 +164,7 @@ export function bondActions(
             : `The term runs for ${untilExpiry ?? 0} more days. A bond cannot be closed early by a stranger.`,
       cost: `${formatGen(bond.stake)} returns to the promisor.`,
       effect:
-        "Closes the term with the commitment intact across every capture that qualified, and releases the stake.",
+        "Closes the term with the commitment intact across every capture that qualified, and releases the stake. Refuses if the archive still holds change points inside the term nobody has examined yet; call check_commitment first in that case.",
     },
   ];
 }

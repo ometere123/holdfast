@@ -136,7 +136,7 @@ def claim_breach(contract, direct_vm, value_ledger, *, second=WEAKENED, at=CHECK
 
 
 def contest(contract, direct_vm, value_ledger, bond_id, *, at=CONTESTED_AT,
-            url=bonds.BOND_URL, stamp=CONTEST_STAMP, offer=None):
+            url=bonds.BOND_URL, stamp=FIRST_STAMP, offer=None):
     """File a contest against an EMPTY mock table.
 
     The empty table is the assertion. `contest_breach` is documented as deterministic: nothing is
@@ -151,13 +151,20 @@ def contest(contract, direct_vm, value_ledger, bond_id, *, at=CONTESTED_AT,
 
 
 def adjudicate(contract, direct_vm, value_ledger, bond_id, *, answer, at=ADJUDICATED_AT,
-               url=bonds.BOND_URL, stamp=CONTEST_STAMP, route=bonds.SNAPSHOT_ROUTE):
+               url=bonds.BOND_URL, stamp=FIRST_STAMP, route=bonds.SNAPSHOT_ROUTE):
     """Serve the cited capture as a one-row window and judge it.
 
     A one-row window is legitimate here where it would not be for a check: `_cdx_member_block`
     requires membership anywhere in the window rather than a pin at row zero, precisely because a
     contest cites a capture the promisor chose and that is legitimately anywhere in the page's
     history.
+
+    THE DEFAULT STAMP IS ONE OF THE BOND'S OWN TWO BREACH CAPTURES, and this is load bearing
+    rather than incidental. `_file_contest` refuses any timestamp that is not
+    `bond.breach_first_timestamp` or `bond.breach_second_timestamp`, so a contest can only ever
+    ask this method to re-judge one of those two, never introduce a new one. `FIRST_STAMP` here
+    replays `bonds.SNAPSHOT_ROUTE`, the exact bytes already pinned for it at claim time, so the
+    stable-replay check passes and every test below is free to vary only the model's answer.
     """
     archive.Archive(direct_vm).window(url, [(stamp, route)])
     set_block_time(direct_vm, at)
@@ -185,6 +192,32 @@ def offline(direct_vm, value_ledger, at):
     direct_vm.clear_mocks()
     set_block_time(direct_vm, at)
     value_ledger.no_value()
+
+
+def expire(contract, direct_vm, value_ledger, bond_id, *, at, pending=()):
+    """Stage the one index `expire_bond` itself queries when the cursor has not reached the
+    term's own boundary, and call it.
+
+    `pending` is a list of fabricated timestamps to report as still unexamined between the
+    cursor and the term end, for the one test that proves `expire_bond` refuses while they are
+    there. Left empty, the index reports nothing past the cursor, which is what a page with
+    nothing left to happen actually looks like: `expire_bond` still asks once, to tell that
+    apart from a real backlog, but nothing beyond the index itself is ever fetched, so no
+    snapshot payload is registered here.
+    """
+    cursor = contract.get_bond(bond_id)["cursor_timestamp"]
+    # `from=<cursor>` is inclusive, so the real archive always answers with the cursor's own row
+    # at minimum; a response with nothing at all is not a shape `_cdx_window_block` can even
+    # parse (`parse_cdx` refuses zero rows as `[EXTERNAL]` on its own), and it is not the shape
+    # the real answer takes when nothing has happened. This row carries no payload mock, the same
+    # way `Archive.window`'s does, because it must never be fetched.
+    rows = [[cursor, "CURSORROWDIGESTNOTFETCHED0000000", "1000", "200"]]
+    for stamp in pending:
+        rows.append([stamp, "PENDINGROWDIGESTNOTFETCHED000000", "1000", "200"])
+    archive.Archive(direct_vm).serve_cdx(bonds.BOND_URL, cursor, rows)
+    set_block_time(direct_vm, at)
+    value_ledger.no_value()
+    return contract.expire_bond(bond_id)
 
 
 # ----------------------------------------------------------------------------
@@ -512,16 +545,48 @@ def test_only_an_active_bond_has_change_points_left_to_examine(
     assert "is %s, and only an %s bond" % (ST_BREACH_CLAIMED, ST_ACTIVE) in message
 
 
-def test_a_check_past_the_end_of_the_term_is_refused_and_points_at_expire_bond(
+def test_a_check_after_wall_clock_expiry_still_examines_a_capture_inside_the_term(
         contract, direct_vm, value_ledger):
-    bond_id = bonds.place(contract, direct_vm, value_ledger)
+    """THE PROPERTY THE FIX EXISTS FOR: an eligible change point inside the term is never skipped.
 
+    An earlier version gated this method on the wall clock alone (`now >= bond.expires_at`), so
+    once real time passed the deadline it refused outright, forever, no matter what was still
+    unexamined between the cursor and the term's own boundary. `EXPIRES_AT` is that wall-clock
+    deadline, and `FIRST_STAMP` sits months before the boundary, squarely inside the term, so it
+    must still be reachable through `check_commitment` even though real time has already passed
+    `bond.expires_at`.
+    """
+    bond_id = bonds.place(contract, direct_vm, value_ledger)
+    result = check(contract, direct_vm, value_ledger, bond_id,
+                   [(FIRST_STAMP, bonds.SNAPSHOT_ROUTE)],
+                   at=EXPIRES_AT, answers=[(FIRST_STAMP, archive.holds())])
+
+    assert "examined 1 change point(s) up to %s" % FIRST_STAMP in result, result
+    bond = contract.get_bond(bond_id)
+    assert bond["cursor_timestamp"] == FIRST_STAMP
+    assert bond["state"] == ST_ACTIVE
+
+
+def test_a_check_once_the_cursor_reaches_the_terms_end_is_refused_and_points_at_expire_bond(
+        contract, direct_vm, value_ledger):
+    """Once nothing remains inside the term, the refusal returns, and it names the right call.
+
+    The cursor is walked all the way to the exact 14-digit stamp of `bond.expires_at` by examining
+    a capture placed there, so the second call below refuses on the state check alone: an empty
+    mock table proves it never reaches the network to do it.
+    """
+    bond_id = bonds.place(contract, direct_vm, value_ledger)
+    term_stamp = "20270129024608"  # EXPIRES_AT, as the 14-digit stamp _stamp14 would produce.
+    check(contract, direct_vm, value_ledger, bond_id, [(term_stamp, bonds.SNAPSHOT_ROUTE)],
+          at=EXPIRES_AT, answers=[(term_stamp, archive.holds())])
+    assert contract.get_bond(bond_id)["cursor_timestamp"] == term_stamp
+
+    offline(direct_vm, value_ledger, "2027-01-30T02:46:08Z")
     with pytest.raises(Exception) as caught:
-        check(contract, direct_vm, value_ledger, bond_id, [(FIRST_STAMP, bonds.SNAPSHOT_ROUTE)],
-              at=EXPIRES_AT, answers=[(FIRST_STAMP, archive.holds())])
+        contract.check_commitment(bond_id)
     message = user_error_message(caught.value)
     assert message.startswith("[EXPECTED]"), message
-    assert "reached the end of its term at %s" % EXPIRES_AT in message
+    assert "examined every change point through the end of its term at %s" % EXPIRES_AT in message
     assert "call expire_bond" in message
 
 
@@ -577,7 +642,7 @@ def test_a_contest_costs_exactly_the_declared_basis_points_of_the_stake(
     assert bond["contest_bond"] == str(CONTEST_BOND_WEI)
     assert CONTEST_BOND_WEI == bonds.DEFAULT_STAKE // 10
     assert bond["contest_url"] == bonds.BOND_URL
-    assert bond["contest_timestamp"] == CONTEST_STAMP
+    assert bond["contest_timestamp"] == FIRST_STAMP
     assert bond["contested_at"] == CONTESTED_AT
     assert bond["contest_outcome"] == ""
     assert "Anyone may now call adjudicate_contest" in result
@@ -781,57 +846,58 @@ def test_an_indeterminate_adjudication_reverts_transient_leaves_it_contested_and
     assert contract.get_bond(bond_id)["state"] == ST_ACTIVE
 
 
-def test_a_cited_capture_that_fails_the_gates_is_refused_external_and_pays_nobody(
+# TWO CASES THAT USED TO LIVE HERE, AND WHY THEY DO NOT ANY MORE. A contest citing a navigation
+# shell that fails the gates, and a contest citing a different company's terms page to prove
+# `_spec_for` derives from the bond and not from the evidence, both required `adjudicate_contest`
+# to reach a capture the promisor was never restricted to. `_file_contest` now refuses any
+# `evidence_url` other than `bond.url` and any `evidence_timestamp` other than one of the bond's
+# own two breach captures, so both scenarios are refused at FILING, before adjudication is ever
+# reached, and neither can be constructed against `adjudicate_contest` any more: a cited timestamp
+# that reaches it was already examined once, on the bonded page, and already qualified when it
+# was, because a capture that fails a gate is recorded as a blank frame and never becomes one of
+# the two captures a breach cites. The two replacements below test the filing-time refusal that
+# closed both cases, in `contest_breach`'s own section, where they now belong.
+
+
+def test_a_contest_citing_a_different_page_than_the_bond_is_refused(
         contract, direct_vm, value_ledger):
-    """A contest has to cite an artefact that is structurally the document it claims to be.
+    """The substitute-page attack: cite a friendlier document instead of the one that was bonded.
 
-    Otherwise the cheapest possible contest is a navigation shell: it retrieves cleanly, it contains
-    none of the terms, and a model asked whether a commitment holds in 569 characters of chrome could
-    answer almost anything.
-    """
-    bond_id = claim_breach(contract, direct_vm, value_ledger)
-    contest(contract, direct_vm, value_ledger, bond_id)
-
-    with pytest.raises(Exception) as caught:
-        adjudicate(contract, direct_vm, value_ledger, bond_id, answer=archive.holds(),
-                   route="snap-github-tos-chrome-only")
-    message = user_error_message(caught.value)
-    assert message.startswith("[EXTERNAL]"), message
-    assert "did not qualify: gate(s) C,D did not pass" in message
-    assert "structurally the document it claims to be" in message
-    assert contract.get_bond(bond_id)["state"] == ST_CONTESTED
-    assert value_ledger.transfers == []
-
-
-def test_the_cited_capture_is_judged_against_the_bonds_own_gate_specification(
-        contract, direct_vm, value_ledger):
-    """`_spec_for` rebuilds the specification from storage, and this is the empirical proof.
-
-    The contest cites a different company's terms page. `snap-aws-terms-gzip` is 215,912 bytes of
-    gzip and it is a real, complete terms document: gate B passes because the page contains its own
-    anchor word, and gate C passes at two of three section hits on the `hits >= total - 1` margin.
-    It fails gate D ALONE, because gate D looks for "governing law" — the terminal phrase THIS bond
-    declared, over a page that does not contain it.
-
-    That single failing gate is the measurement. If adjudication derived its specification from the
-    evidence URL, the terminal would have come from somewhere else and gate D would have had no
-    reason to be the one that failed. And it is the only demonstration in this project's fixture set
-    that gate D does work the other gates do not: gate B passes on all eight captured payloads under
-    this anchor, so gates C and D are the whole of the discrimination, and this is the one capture
-    where C passes and D does not.
+    Without this, the cheapest way to win a contest is to point at some other page entirely, real
+    or fabricated, that happens to still say the right thing, rather than defend the actual capture
+    the breach was claimed against.
     """
     aws_url = "https://aws.amazon.com/service-terms/"
     bond_id = claim_breach(contract, direct_vm, value_ledger)
-    contest(contract, direct_vm, value_ledger, bond_id, url=aws_url)
 
-    with pytest.raises(Exception) as caught:
-        adjudicate(contract, direct_vm, value_ledger, bond_id, answer=archive.holds(),
-                   url=aws_url, route="snap-aws-terms-gzip")
-    message = user_error_message(caught.value)
-    assert message.startswith("[EXTERNAL]"), message
-    assert "gate(s) D did not pass" in message, message
-    assert "gate(s) C" not in message, "gate C rejected a complete terms document: " + message
-    assert contract.get_bond(bond_id)["anchor_terminal"] == bonds.ANCHOR_TERMINAL
+    message = returned_refusal(
+        contest(contract, direct_vm, value_ledger, bond_id, url=aws_url))
+    assert message.startswith("[EXPECTED]"), message
+    assert "must cite the bonded page %s, not %s" % (bonds.BOND_URL, aws_url) in message
+    assert contract.get_bond(bond_id)["state"] == ST_BREACH_CLAIMED
+    assert contract.get_bond(bond_id)["contest_bond"] == "0"
+    assert value_ledger.retained == bonds.DEFAULT_STAKE
+
+
+def test_a_contest_citing_a_timestamp_outside_the_breach_is_refused(
+        contract, direct_vm, value_ledger):
+    """A contest disputes one of THIS breach's own two captures, never a different moment.
+
+    `CONTEST_STAMP` is a real, later capture of the bonded page, not a forgery. That is the point:
+    even a genuine, retrievable capture of the right page cannot be cited unless it is one of the
+    two the claim itself rests on. Anything else would let a promisor point at whichever later
+    reading happens to be convenient instead of defending the reading that was actually flagged.
+    """
+    bond_id = claim_breach(contract, direct_vm, value_ledger)
+
+    message = returned_refusal(
+        contest(contract, direct_vm, value_ledger, bond_id, stamp=CONTEST_STAMP))
+    assert message.startswith("[EXPECTED]"), message
+    assert ("must cite one of the two captures that triggered this claim, %s or %s"
+            % (FIRST_STAMP, SECOND_STAMP)) in message
+    assert contract.get_bond(bond_id)["state"] == ST_BREACH_CLAIMED
+    assert contract.get_bond(bond_id)["contest_bond"] == "0"
+    assert value_ledger.retained == bonds.DEFAULT_STAKE
 
 
 def test_a_contest_the_model_answers_outside_the_four_words_fails_closed_as_an_llm_error(
@@ -893,8 +959,10 @@ def test_an_adjudication_records_the_cited_capture_in_the_history(
                answer=archive.holds("governing law", "the twelve month notice clause is intact"))
 
     history = contract.bond_history(bond_id)
+    # FIRST_STAMP appears twice: once from the original check that flagged it, once again here,
+    # because a contest cites one of the breach's own two captures rather than a new timestamp.
     assert [point["timestamp"] for point in history] == [
-        bonds.BASELINE_STAMP, FIRST_STAMP, SECOND_STAMP, CONTEST_STAMP]
+        bonds.BASELINE_STAMP, FIRST_STAMP, SECOND_STAMP, FIRST_STAMP]
     cited = history[-1]
     assert cited["classification"] == CL_HOLDS
     assert cited["rationale"] == "the twelve month notice clause is intact"
@@ -1058,17 +1126,19 @@ def test_a_settled_bond_cannot_be_settled_twice(contract, direct_vm, value_ledge
 # expire_bond
 # ----------------------------------------------------------------------------
 
-def test_expiry_returns_the_whole_stake_to_the_promisor_and_asks_nothing_of_any_third_party(
+def test_expiry_returns_the_whole_stake_to_the_promisor_once_the_index_confirms_nothing_pending(
         contract, direct_vm, value_ledger):
-    """The ordinary ending, and it must not depend on the archive being reachable.
+    """The ordinary ending, now checked against the archive rather than assumed from the clock.
 
-    A promisor whose stake could only be released by a call that fetches something has a stake held
-    hostage by Wayback's uptime. So expiry is arithmetic over stored state: the mock table is empty
-    here and the call succeeds.
+    An earlier version of this test staged an entirely empty mock table, because expiry used to be
+    pure arithmetic over stored state. It no longer is: a busy page could accumulate change points
+    faster than `check_commitment` clears them, so a wall-clock deadline alone cannot tell "nothing
+    happened" from "something happened and nobody looked," and `expire_bond` now asks the index
+    once to be sure it is the first case. The page here reports nothing past the cursor, which is
+    the honest shape of "nothing left to happen," and the payout proceeds exactly as before.
     """
     bond_id = bonds.place(contract, direct_vm, value_ledger)
-    offline(direct_vm, value_ledger, EXPIRES_AT)
-    result = contract.expire_bond(bond_id)
+    result = expire(contract, direct_vm, value_ledger, bond_id, at=EXPIRES_AT)
 
     bond = contract.get_bond(bond_id)
     assert bond["state"] == ST_RETURNED
@@ -1083,6 +1153,36 @@ def test_expiry_returns_the_whole_stake_to_the_promisor_and_asks_nothing_of_any_
     assert value_ledger.retained == 0
     assert contract.get_ledger()["total_returned_to_promisors"] == str(bonds.DEFAULT_STAKE)
     assert contract.get_ledger()["total_paid_to_payees"] == "0"
+
+
+def test_expiry_is_refused_while_the_archive_still_holds_unexamined_change_points(
+        contract, direct_vm, value_ledger):
+    """THE OTHER PROPERTY THE FIX EXISTS FOR: a stake cannot round-trip through escrow unread.
+
+    The cursor is left wherever `create_bond` put it, months before the term boundary, and the
+    index here reports one change point still sitting between the two that nobody has examined.
+    `expire_bond` must refuse rather than pay out, because "the term is over" and "the term's
+    history was looked at" are different facts and only the archive can settle the second one.
+    """
+    bond_id = bonds.place(contract, direct_vm, value_ledger)
+    cursor = contract.get_bond(bond_id)["cursor_timestamp"]
+
+    with pytest.raises(Exception) as caught:
+        expire(contract, direct_vm, value_ledger, bond_id, at=EXPIRES_AT, pending=[FIRST_STAMP])
+    message = user_error_message(caught.value)
+    assert message.startswith("[EXPECTED]"), message
+    assert "1 unexamined change point(s)" in message, message
+    assert cursor in message
+    assert EXPIRES_AT in message
+    assert "call check_commitment" in message
+    assert value_ledger.transfers == []
+
+    # And once that same change point is actually examined, the term is over and it can expire.
+    check(contract, direct_vm, value_ledger, bond_id, [(FIRST_STAMP, bonds.SNAPSHOT_ROUTE)],
+          at=EXPIRES_AT, answers=[(FIRST_STAMP, archive.holds())])
+    result = expire(contract, direct_vm, value_ledger, bond_id, at="2027-01-30T02:46:08Z")
+    assert contract.get_bond(bond_id)["state"] == ST_RETURNED
+    assert "%d wei returned to the promisor" % bonds.DEFAULT_STAKE in result
 
 
 def test_expiry_is_refused_one_second_before_the_term_ends(contract, direct_vm, value_ledger):
@@ -1122,8 +1222,7 @@ def test_a_claimed_breach_does_not_time_out_into_a_returned_stake(
 
 def test_a_returned_bond_cannot_be_expired_twice(contract, direct_vm, value_ledger):
     bond_id = bonds.place(contract, direct_vm, value_ledger)
-    offline(direct_vm, value_ledger, EXPIRES_AT)
-    contract.expire_bond(bond_id)
+    expire(contract, direct_vm, value_ledger, bond_id, at=EXPIRES_AT)
 
     with pytest.raises(Exception) as caught:
         contract.expire_bond(bond_id)
@@ -1145,8 +1244,7 @@ def test_a_bond_that_survives_its_term_reports_the_checks_it_survived(
     bond_id = bonds.place(contract, direct_vm, value_ledger)
     check(contract, direct_vm, value_ledger, bond_id, [(FIRST_STAMP, bonds.SNAPSHOT_ROUTE)],
           at=CHECKED_AT, answers=[(FIRST_STAMP, archive.holds())])
-    offline(direct_vm, value_ledger, EXPIRES_AT)
-    result = contract.expire_bond(bond_id)
+    result = expire(contract, direct_vm, value_ledger, bond_id, at=EXPIRES_AT)
 
     assert "surviving 2 check(s)" in result, result
     assert contract.commitment_status(bond_id)["state"] == ST_RETURNED
@@ -1197,8 +1295,7 @@ def test_across_an_upheld_contest_and_a_clean_expiry_both_parties_are_made_whole
     bond_id = claim_breach(contract, direct_vm, value_ledger)
     contest(contract, direct_vm, value_ledger, bond_id)
     adjudicate(contract, direct_vm, value_ledger, bond_id, answer=archive.holds())
-    offline(direct_vm, value_ledger, EXPIRES_AT)
-    contract.expire_bond(bond_id)
+    expire(contract, direct_vm, value_ledger, bond_id, at=EXPIRES_AT)
 
     bond = contract.get_bond(bond_id)
     escrowed = bonds.DEFAULT_STAKE + CONTEST_BOND_WEI

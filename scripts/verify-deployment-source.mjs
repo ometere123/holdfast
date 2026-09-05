@@ -25,7 +25,17 @@ if (!address) {
   process.exit(1);
 }
 
-const digest = (text) => createHash("sha256").update(text, "utf8").digest("hex");
+/**
+ * Line endings are transport, not content. A deployment made from a Windows checkout (or a CLI
+ * that normalizes on write) can round-trip every line through `\r\n`, which change nothing a
+ * Python interpreter or a reader sees but which would fail a byte-for-byte hash compare on that
+ * account alone. Measured directly: `deploy` from a CRLF working tree put 3,452 extra bytes on
+ * chain, one `\r` per line, over an otherwise identical file. Normalizing both sides to `\n`
+ * before hashing is what keeps this check about the source and not about whose editor wrote it.
+ */
+const normalizeEol = (text) => text.replace(/\r\n/g, "\n");
+
+const digest = (text) => createHash("sha256").update(normalizeEol(text), "utf8").digest("hex");
 
 const local = readFileSync("contracts/Holdfast.py", "utf8");
 

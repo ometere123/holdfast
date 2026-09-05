@@ -350,7 +350,11 @@ export const SETTLE_PROGRAM: ProgramStep[] = [
   },
 ];
 
-/** `expire_bond`: the deterministic write. No fetch, no reading, nothing to name. */
+/**
+ * `expire_bond`. Mostly deterministic, but not purely offline any more: when the cursor has not
+ * reached the term's own boundary, it asks the archive once whether anything in that gap is
+ * still unexamined, and refuses rather than pay out on history nobody looked at.
+ */
 export const EXPIRE_PROGRAM: ProgramStep[] = [
   {
     key: "guards",
@@ -361,10 +365,18 @@ export const EXPIRE_PROGRAM: ProgramStep[] = [
     kind: "deterministic",
   },
   {
+    key: "catch-up",
+    label: "Confirm the term's history is examined",
+    detail:
+      "If the cursor has not reached the end of the term, the index is queried once for anything still unexamined in that gap. A busy page can accumulate change points faster than check_commitment clears them, and this is what stops a stake from being released while some of that history was never looked at. A page with nothing left to examine pays out exactly as before.",
+    source: "web.archive.org/cdx/search/cdx",
+    kind: "network",
+  },
+  {
     key: "transfer",
     label: "Return the stake",
     detail:
-      "The whole stake to the promisor. Nothing is re-fetched, because nothing is being claimed: the term ended with every capture that qualified still carrying the commitment.",
+      "The whole stake to the promisor. The term ended with every capture that qualified still carrying the commitment, and the step above is what makes that a checked fact rather than an assumption.",
     source: "escrow",
     kind: "deterministic",
   },

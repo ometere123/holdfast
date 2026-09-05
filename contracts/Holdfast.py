@@ -2586,6 +2586,21 @@ rationale: what specifically in the document supports that classification (max
             self._reject("term_days must be %d to %d, got %d"
                          % (MIN_TERM_DAYS, MAX_TERM_DAYS, term))
 
+        now = self._now()
+        # The term is anchored to the baseline (see the comment on `expires_at` below), which
+        # means a baseline old enough, paired with a short term, can compute an `expires_at`
+        # that is already in the past the moment this call is made. A bond opened in that state
+        # has no live term at all: `check_commitment` would refuse it immediately and
+        # `expire_bond` would pay out immediately, so the stake would do nothing but round-trip
+        # through escrow. Caught here, deterministically, before any network call.
+        expires_at = self._add_seconds(self._iso_from_stamp14(baseline), term * 86400)
+        if self._at_or_after(now, expires_at):
+            self._reject(
+                "baseline %s plus a %d day term ends at %s, which is not after now (%s); a "
+                "bond cannot be created already expired. Choose a baseline recent enough that "
+                "the term still has time left on it."
+                % (baseline, term, expires_at, now))
+
         spec = GateSpec(anchor, words, terminal)
         bad = spec.validate()
         if bad is not None:
@@ -2605,8 +2620,6 @@ rationale: what specifically in the document supports that classification (max
         stake = int(gl.message.value)
         if stake <= 0:
             self._reject("a bond needs a stake; this call carried no value")
-
-        now = self._now()
 
         # Everything above is deterministic. The first network call happens here.
         to_date = self._stamp14(now)
@@ -2658,8 +2671,9 @@ rationale: what specifically in the document supports that classification (max
             # Anchored to the BASELINE, not to creation. The term is a claim about how long the
             # commitment has to survive in the document, and the document's clock is the
             # archive's. Anchoring to creation would also let a promisor buy extra term by
-            # bonding an old baseline.
-            expires_at=self._add_seconds(self._iso_from_stamp14(baseline), term * 86400),
+            # bonding an old baseline. Computed above, and checked there to still be in the
+            # future before any of this ran.
+            expires_at=expires_at,
             state=ST_ACTIVE,
             # The newest row of the baseline window, not the baseline itself. Everything up to
             # here has been examined, and a cursor left behind at the baseline would re-examine
@@ -2747,13 +2761,33 @@ rationale: what specifically in the document supports that classification (max
                     "%s bond %s was checked at %s; the next check is available at %s. Wayback is "
                     "a rate-limited third party and this bond does not get to loop on it."
                     % (ERROR_EXPECTED, key, bond.last_checked_at, ready_at))
-        if self._at_or_after(now, bond.expires_at):
+
+        # The term boundary as a 14-digit stamp, so it can be compared against and used to bound
+        # cursors and CDX queries the same way every other timestamp in this contract is.
+        #
+        # THIS USED TO GATE ON THE WALL CLOCK INSTEAD (`now >= bond.expires_at`), which meant a
+        # bond whose change points arrived faster than `MAX_POINTS_PER_CHECK` per
+        # `CHECK_INTERVAL_SECONDS` could reach its term's end still carrying an unexamined
+        # backlog, and the moment real time passed `expires_at` this method refused outright:
+        # forever, since the wall clock only moves forward. Those change points were not
+        # deferred, they were unreachable, and `expire_bond` (before its own fix alongside this
+        # one) did not check for them either, so a bond could pay out with real history it never
+        # looked at. The archive's own timeline, not the wall clock, is what decides whether this
+        # bond has anything left to examine: gated on the cursor instead, so every eligible
+        # change point up to the end of the term stays reachable for as long as it takes someone
+        # to call this enough times, no matter how much wall-clock time has passed doing it.
+        term_stamp = self._stamp14(bond.expires_at)
+        if bond.cursor_timestamp >= term_stamp:
             raise gl.vm.UserError(
-                "%s bond %s reached the end of its term at %s; call expire_bond"
-                % (ERROR_EXPECTED, key, bond.expires_at))
+                "%s bond %s has examined every change point through the end of its term at %s; "
+                "call expire_bond" % (ERROR_EXPECTED, key, bond.expires_at))
+
+        # Bounded at whichever comes first: the wall clock (nothing to fetch from the future) or
+        # the term boundary (nothing past it is this bond's to examine, win or lose).
+        wall_stamp = self._stamp14(now)
+        to_date = term_stamp if term_stamp < wall_stamp else wall_stamp
 
         spec = self._spec_for(bond)
-        to_date = self._stamp14(now)
         window = self._cdx_window_block(bond.url, bond.cursor_timestamp, to_date)
         self._raise_if_error(window)
 
@@ -2929,6 +2963,31 @@ rationale: what specifically in the document supports that classification (max
 
         evidence = self._require_url(evidence_url, "evidence_url")
         stamp = self._require_stamp14(evidence_timestamp, "evidence_timestamp")
+
+        # A contest disputes how one of THIS bond's own two flagged captures was read. It is not
+        # a chance to introduce a different page, or a different moment in this page's history,
+        # as evidence.
+        #
+        # Nothing above enforced either. `evidence_url` was never compared to `bond.url`, so a
+        # promisor could cite a substitute page entirely, and `evidence_timestamp` was never
+        # compared to the captures that actually triggered the claim, so any timestamp at all
+        # would reach `adjudicate_contest` and, per its own docstring, "a genuinely new timestamp
+        # has no pin to be unfaithful to and passes silently" there: it would simply be judged as
+        # a fresh reading with no connection to the breach being contested. Restricting both here
+        # is what keeps `_require_stable_replay`'s pin meaningful: it can only bind a capture this
+        # bond already recorded, so a contest that is not one of those two captures was never
+        # going to be checked against anything.
+        if evidence != bond.url:
+            raise gl.vm.UserError(
+                "%s contest evidence must cite the bonded page %s, not %s; a contest disputes "
+                "how this bond's own captures were read, not a different page"
+                % (ERROR_EXPECTED, bond.url, evidence))
+        if stamp != bond.breach_first_timestamp and stamp != bond.breach_second_timestamp:
+            raise gl.vm.UserError(
+                "%s contest evidence must cite one of the two captures that triggered this "
+                "claim, %s or %s, got %s"
+                % (ERROR_EXPECTED, bond.breach_first_timestamp,
+                   bond.breach_second_timestamp, stamp))
 
         required = int(bond.stake) * CONTEST_BOND_BASIS_POINTS // 10000
         offered = int(gl.message.value)
@@ -3134,6 +3193,15 @@ rationale: what specifically in the document supports that classification (max
         Only from ACTIVE. A promisor must not be able to run the clock out past a live claim, and
         a claimed breach either settles or is contested.
 
+        NO LONGER PURELY OFFLINE. An earlier version paid out on the wall clock alone, which
+        answers "is the term over" and not "has the term's history actually been examined": a
+        page that produced change points faster than `check_commitment` could clear them could
+        reach its term boundary carrying an unread backlog, and this call would return the stake
+        without anyone having looked at it. When the cursor has not reached the term boundary,
+        this now asks the archive once whether anything in the gap is still unexamined, and
+        refuses if so; a page with genuinely nothing left to examine still expires exactly as
+        before, and this one confirmatory read is the cost of telling the two cases apart.
+
         There is no `renew_bond`, even though the product's method table lists one. Renewal
         re-anchors the term against a new baseline, which is the one operation that changes what a
         payout is measured against, and there is no test in this project's suite that exercises
@@ -3152,6 +3220,37 @@ rationale: what specifically in the document supports that classification (max
         if not self._at_or_after(now, bond.expires_at):
             raise gl.vm.UserError(
                 "%s bond %s runs until %s" % (ERROR_EXPECTED, key, bond.expires_at))
+
+        # The wall clock alone is not enough: it says the term is over, not that this bond's
+        # archive history through the end of the term has actually been looked at. A busy page
+        # can accumulate change points faster than `MAX_POINTS_PER_CHECK` per
+        # `CHECK_INTERVAL_SECONDS` clears them, so the cursor reaching the term boundary is not
+        # guaranteed by the wall clock reaching it, and a stake must not round-trip through
+        # escrow on history nobody looked at.
+        #
+        # THE CURSOR ALONE CANNOT ANSWER THIS, which is why this asks the archive rather than
+        # only comparing stamps. A page with nothing left to examine and a page with an
+        # unexamined backlog can show the identical cursor: neither one's cursor will usually
+        # land exactly on the term's boundary, because that requires a real capture to exist at
+        # that precise second. So the two cases are told apart the only way they can be, by
+        # asking whether any change point between the cursor and the term boundary exists and
+        # has not yet been examined. `check_commitment` (after its own fix alongside this one)
+        # stays callable past the wall-clock deadline for exactly this reason, so a backlog this
+        # finds can always be walked down before trying again.
+        term_stamp = self._stamp14(bond.expires_at)
+        if bond.cursor_timestamp < term_stamp:
+            window = self._cdx_window_block(bond.url, bond.cursor_timestamp, term_stamp)
+            self._raise_if_error(window)
+            pending = 0
+            for row in window["rows"]:
+                if str(row[0]) > bond.cursor_timestamp:
+                    pending = pending + 1
+            if pending:
+                raise gl.vm.UserError(
+                    "%s bond %s has %d unexamined change point(s) between its cursor at %s "
+                    "and the end of its term at %s; call check_commitment until it catches up "
+                    "before expiring this bond"
+                    % (ERROR_EXPECTED, key, pending, bond.cursor_timestamp, bond.expires_at))
 
         returned = int(bond.stake)
         self._pay(bond.promisor, u256(returned))

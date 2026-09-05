@@ -89,6 +89,12 @@ text, and states the exact number of consecutive captures a breach needs
 - **RETURNED**: "The term ran out with the commitment intact across every qualified capture, and
   the stake went back." This is the `expire_bond` outcome, callable by anyone once
   `bond.expires_at` has passed and the bond is still ACTIVE (not claimed, not contested).
+- **Pending-history refusal**: `expire_bond` also checks whether the archive holds change points
+  inside the term that no `check_commitment` call has examined yet (a busy page can accumulate
+  them faster than the once-per-day rate limit clears them). If so, it refuses `[EXPECTED]` and
+  names how many are pending, rather than releasing the stake on history nobody looked at. This
+  reads on screen exactly like any other `[EXPECTED]` refusal, never as a weakened or breached
+  state: nothing about the commitment has been found, only that nothing has been checked yet.
 
 ## Payout (money actually moves)
 

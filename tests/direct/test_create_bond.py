@@ -29,7 +29,7 @@ import pytest
 
 import archive
 import bonds
-from conftest import address_hex, numeric_constant, returned_refusal, str_constant
+from conftest import address_hex, numeric_constant, returned_refusal, set_block_time, str_constant
 
 ST_ACTIVE = str_constant("ST_ACTIVE")
 MIN_TERM_DAYS = numeric_constant("MIN_TERM_DAYS")
@@ -220,6 +220,10 @@ REFUSALS = [
      "term_days must be %d to %d" % (MIN_TERM_DAYS, MAX_TERM_DAYS)),
     ("a term over the ceiling", {"term_days": MAX_TERM_DAYS + 1},
      "term_days must be %d to %d" % (MIN_TERM_DAYS, MAX_TERM_DAYS)),
+    # The default baseline is 2026-01-29 and `simulate` runs the wall clock at `CREATED_AT`,
+    # 2026-08-25: the shortest legal term ends in February, months before the call is even made.
+    ("a term short enough that the baseline has already lapsed", {"term_days": MIN_TERM_DAYS},
+     "which is not after now"),
     ("a terminal that contains the derived anchor", {"anchor_terminal": "these terms in general"},
      "the gate specification is not usable"),
     ("a terminal that is also a section", {"anchor_terminal": "payment"},
@@ -337,6 +341,34 @@ def test_a_refused_funded_call_writes_no_state_and_returns_every_wei(
         "the refused call left a change point behind, so a write now happens before the last check "
         "and the boundary is handing back a stake over half-written state")
 
+
+def test_an_already_expired_bond_is_refused_with_the_stake_back_before_any_network_call(
+        contract, direct_vm, value_ledger):
+    """A baseline old enough, paired with a short term, computes an already-past `expires_at`.
+
+    Staged with an EMPTY mock table and the full stake attached. The expiry check runs among the
+    deterministic checks, before the first fetch, so a fully funded attempt at a bond whose
+    baseline-anchored term has already lapsed must never touch the archive at all: if it did, this
+    test would fail on an unmocked-URL error rather than reading a refusal back. Real value is
+    involved for the same reason `test_a_refused_funded_call_writes_no_state_and_returns_every_wei`
+    is: an already-expired bond that got created would sit there escrowing a stake against a term
+    that `check_commitment` and `expire_bond` would both immediately refuse to touch, doing nothing
+    for anyone until someone noticed and forced it back out.
+    """
+    direct_vm.clear_mocks()
+    set_block_time(direct_vm, bonds.CREATED_AT)
+    value_ledger.fund(bonds.DEFAULT_STAKE)
+    message = returned_refusal(
+        contract.create_bond(**bonds.draft(term_days=MIN_TERM_DAYS)))
+    assert "which is not after now" in message, message
+    assert "cannot be created already expired" in message, message
+
+    assert contract.list_bonds() == []
+    ledger = contract.get_ledger()
+    assert ledger["bonds_created"] == "0"
+    assert ledger["total_escrowed"] == "0"
+    assert value_ledger.paid_to(direct_vm.sender) == bonds.DEFAULT_STAKE
+    assert value_ledger.retained == 0
 
 
 # ---------------------------------------------------------------------------
