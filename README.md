@@ -15,7 +15,10 @@ Current status: the Holdfast contract, fixture archive reader, lifecycle rail, i
 controls, bond creation/contest/settlement flows, direct/frontend regression suites, and served-build
 browser checks are wired. Canonical StudioNet deployment:
 `0x3dE045275dfB292BA6375f63C809b281A69dcaad` (finalized, GenVM SUCCESS, source/schema parity
-recorded). Representative payable live exercises remain explicitly limited in the evidence record.
+recorded). A funded `create_bond` and a `check_commitment` call have both been exercised live
+through the frontend against this deployment (see `evidence/studionet.json`); the
+holds/weakened classification path is proven live against captured bytes in
+`tests/direct/test_lifecycle.py` and was exercised once already against the prior deployment.
 Live app: https://holdfast-orpin.vercel.app
 
 ## Layout

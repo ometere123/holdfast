@@ -17,8 +17,9 @@ The fixture corpus is self-contained under `tests/fixtures/holdfast/`; `scripts/
 re-derives its manifest from those bytes. Any address in `DEPLOYMENT.json` is canonical only when
 its finalized receipt, schema and byte-for-byte source parity match the final Git commit. The
 canonical deployment is `0x3dE045275dfB292BA6375f63C809b281A69dcaad`, transaction
-`0x88616f9efb9fc471f4be7542592f020ed9b45cbe0832697d30af9a0009c6b50f`; payable live exercises
-remain limited and are labelled in the evidence record.
+`0x88616f9efb9fc471f4be7542592f020ed9b45cbe0832697d30af9a0009c6b50f`. A funded `create_bond`
+and a `check_commitment` call have both been exercised live through the frontend against this
+deployment; both are labelled with their transaction hashes and outcomes in the evidence record.
 
 ## Verification
 
