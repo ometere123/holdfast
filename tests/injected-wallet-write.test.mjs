@@ -137,7 +137,7 @@ test("a Rabby-style wallet can sign a real write end to end, with no *Snaps meth
     await withGlobalWindow(provider, async () => {
       const client = await createInjectedClient(address);
       const hash = await client.writeContract({
-        address: "0x0D656F1A319Dad705eeE9CF25045CF22a05776B9",
+        address: "0x3dE045275dfB292BA6375f63C809b281A69dcaad",
         functionName: "check_commitment",
         args: ["hf-live-evidence-1"],
         value: 0n,
@@ -166,7 +166,7 @@ test("a user rejection (4001) on the signature itself surfaces as a rejection, w
       await assert.rejects(
         () =>
           client.writeContract({
-            address: "0x0D656F1A319Dad705eeE9CF25045CF22a05776B9",
+            address: "0x3dE045275dfB292BA6375f63C809b281A69dcaad",
             functionName: "check_commitment",
             args: ["hf-live-evidence-1"],
             value: 0n,

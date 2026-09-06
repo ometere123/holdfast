@@ -14,7 +14,7 @@ Submission record: [`docs/SUBMISSION.md`](docs/SUBMISSION.md)
 Current status: the Holdfast contract, fixture archive reader, lifecycle rail, injected wallet
 controls, bond creation/contest/settlement flows, direct/frontend regression suites, and served-build
 browser checks are wired. Canonical StudioNet deployment:
-`0x0D656F1A319Dad705eeE9CF25045CF22a05776B9` (finalized, GenVM SUCCESS, source/schema parity
+`0x3dE045275dfB292BA6375f63C809b281A69dcaad` (finalized, GenVM SUCCESS, source/schema parity
 recorded). Representative payable live exercises remain explicitly limited in the evidence record.
 Live app: https://holdfast-orpin.vercel.app
 
