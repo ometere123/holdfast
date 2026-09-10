@@ -3,7 +3,7 @@
   "network": "studionet",
   "contract": "0x522a711b2D9E844CC5F73fB52eCa20931ac2B5Ae",
   "deploymentTransaction": "0x35b496aa57e3f613555fe2cef91d99e62fff913832bd2b4b25810ce823013078",
-  "sourceCommit": "642ce87",
+  "sourceCommit": "d0f4ae9",
   "sourceSha256": "ffbef1c5f06c40304c2c1c50f56855b6679f45dfb34831c033ac64e36e0008c5",
   "contractBytes": 164870,
   "deployedSourceVerified": true,
