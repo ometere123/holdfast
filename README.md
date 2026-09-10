@@ -14,7 +14,7 @@ Submission record: [`docs/SUBMISSION.md`](docs/SUBMISSION.md)
 Current status: the Holdfast contract, fixture archive reader, lifecycle rail, injected wallet
 controls, bond creation/contest/settlement flows, direct/frontend regression suites, and served-build
 browser checks are wired. Canonical StudioNet deployment:
-`0x3dE045275dfB292BA6375f63C809b281A69dcaad` (finalized, GenVM SUCCESS, source/schema parity
+`0x522a711b2D9E844CC5F73fB52eCa20931ac2B5Ae` (finalized, GenVM SUCCESS, source/schema parity
 recorded). A funded `create_bond` and a `check_commitment` call have both been exercised live
 through the frontend against this deployment (see `evidence/studionet.json`); the
 holds/weakened classification path is proven live against captured bytes in

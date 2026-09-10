@@ -1,14 +1,14 @@
 {
   "canonicalStatus": "CANONICAL",
   "network": "studionet",
-  "contract": "0x3dE045275dfB292BA6375f63C809b281A69dcaad",
-  "deploymentTransaction": "0x88616f9efb9fc471f4be7542592f020ed9b45cbe0832697d30af9a0009c6b50f",
-  "sourceCommit": "fd4749e",
-  "sourceSha256": "b6c3d766e23bd049fb35c8f042c3a7c13b80fd87d68e043c67489f2c895cbe31",
-  "contractBytes": 163361,
+  "contract": "0x522a711b2D9E844CC5F73fB52eCa20931ac2B5Ae",
+  "deploymentTransaction": "0x35b496aa57e3f613555fe2cef91d99e62fff913832bd2b4b25810ce823013078",
+  "sourceCommit": "642ce87",
+  "sourceSha256": "ffbef1c5f06c40304c2c1c50f56855b6679f45dfb34831c033ac64e36e0008c5",
+  "contractBytes": 164870,
   "deployedSourceVerified": true,
   "schemaVerified": true,
-  "deploymentFinalizedAt": "2026-09-06T00:48:10+00:00",
+  "deploymentFinalizedAt": "2026-09-07T10:40:06+00:00",
   "reason": "Redeployed to close four gaps from external review (already-expired-at-creation bonds, skippable eligible captures near term end, premature expiry ahead of unprocessed history, and off-target contest evidence). Finalized StudioNet deployment with GenVM SUCCESS, callable schema, and source parity verified after normalizing CRLF/LF (the deploying working tree's line endings, not a content difference).",
   "historicalEvidence": "Supersedes 0x0D656F1A319Dad705eeE9CF25045CF22a05776B9, the prior canonical deployment (sourceCommit 2660bc5807b785a4327b2f410b61d4a1a7aa7300), which does not include this fix."
 }

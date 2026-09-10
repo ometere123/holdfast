@@ -64,9 +64,9 @@ MAX_POINTS_PER_CHECK = numeric_constant("MAX_POINTS_PER_CHECK")
 #: points breaks the tests that depend on the amount instead of silently moving what a contest costs.
 CONTEST_BOND_WEI = bonds.DEFAULT_STAKE * CONTEST_BOND_BASIS_POINTS // 10000
 
-#: The two stamps a breach is built from. Both are after `20260417134054`, the newest row in the
-#: 200-row captured index, which is where `create_bond` leaves the cursor; and both are before the
-#: wall clock of the check, so the `to=` bound the contract builds actually covers them.
+#: The two stamps a breach is built from. Both are after `bonds.BASELINE_STAMP`, where
+#: `create_bond` leaves the cursor (the baseline itself, and nothing later); and both are before
+#: the wall clock of the check, so the `to=` bound the contract builds actually covers them.
 FIRST_STAMP = "20260601090000"
 SECOND_STAMP = "20260715120000"
 
@@ -433,8 +433,11 @@ def test_the_cursor_row_comes_back_in_the_window_and_is_not_examined_again(
 
     assert "examined 1 change point(s)" in result, result
     history = contract.bond_history(bond_id)
+    # The cursor is the baseline itself here, and it appears exactly once: the point creation
+    # recorded for it. A build that re-fetched and re-examined the cursor row during this check
+    # would append a second point at that same timestamp, which this exact list rules out.
+    assert cursor == bonds.BASELINE_STAMP
     assert [point["timestamp"] for point in history] == [bonds.BASELINE_STAMP, FIRST_STAMP]
-    assert cursor not in [point["timestamp"] for point in history]
 
 
 def test_an_index_with_nothing_newer_than_the_cursor_reverts_external_and_writes_nothing(

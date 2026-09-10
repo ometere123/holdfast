@@ -16,8 +16,8 @@ Live app: https://holdfast-orpin.vercel.app
 The fixture corpus is self-contained under `tests/fixtures/holdfast/`; `scripts/verify_fixtures.py`
 re-derives its manifest from those bytes. Any address in `DEPLOYMENT.json` is canonical only when
 its finalized receipt, schema and byte-for-byte source parity match the final Git commit. The
-canonical deployment is `0x3dE045275dfB292BA6375f63C809b281A69dcaad`, transaction
-`0x88616f9efb9fc471f4be7542592f020ed9b45cbe0832697d30af9a0009c6b50f`. A funded `create_bond`
+canonical deployment is `0x522a711b2D9E844CC5F73fB52eCa20931ac2B5Ae`, transaction
+`0x35b496aa57e3f613555fe2cef91d99e62fff913832bd2b4b25810ce823013078`. A funded `create_bond`
 and a `check_commitment` call have both been exercised live through the frontend against this
 deployment; both are labelled with their transaction hashes and outcomes in the evidence record.
 

@@ -45,13 +45,13 @@ jobs:
       - run: npm run verify:gates
       - name: Verify deployed source matches contracts/Holdfast.py (canonical StudioNet deployment)
         env:
-          NEXT_PUBLIC_HOLDFAST_CONTRACT: "0x3dE045275dfB292BA6375f63C809b281A69dcaad"
+          NEXT_PUBLIC_HOLDFAST_CONTRACT: "0x522a711b2D9E844CC5F73fB52eCa20931ac2B5Ae"
           NEXT_PUBLIC_GENLAYER_ENDPOINT: "https://studio.genlayer.com/api"
           NEXT_PUBLIC_GENLAYER_CHAIN: "studionet"
         run: npm run verify:deployment
       - name: Verify the canonical deployment's method schema
         env:
-          NEXT_PUBLIC_HOLDFAST_CONTRACT: "0x3dE045275dfB292BA6375f63C809b281A69dcaad"
+          NEXT_PUBLIC_HOLDFAST_CONTRACT: "0x522a711b2D9E844CC5F73fB52eCa20931ac2B5Ae"
           NEXT_PUBLIC_GENLAYER_ENDPOINT: "https://studio.genlayer.com/api"
           NEXT_PUBLIC_GENLAYER_CHAIN: "studionet"
         run: npm run verify:schema

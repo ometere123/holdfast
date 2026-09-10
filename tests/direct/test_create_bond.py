@@ -172,18 +172,27 @@ def test_the_term_runs_from_the_baseline_capture_and_not_from_the_moment_of_crea
     assert early["created_at"] != late["created_at"]
 
 
-def test_the_cursor_lands_on_the_newest_row_of_the_baseline_window(
+def test_the_cursor_lands_on_the_baseline_itself_and_not_ahead_of_it(
         contract, direct_vm, value_ledger):
-    """Past the baseline, and inside the window, so the first check has somewhere to start.
+    """The one row `create_bond` actually reads is the only one it may call examined.
 
-    A cursor left at the baseline would make the first `check_commitment` re-examine a capture
-    already known to qualify and hold, which costs a retrieval and a model call to learn nothing. A
-    cursor at the wall clock would skip every capture the saturated window did not return.
+    AN EARLIER VERSION OF THIS TEST ASSERTED THE OPPOSITE, AND THAT WAS THE DEFECT. It left the
+    cursor at the newest row anywhere in the baseline query's window on the theory that a cursor
+    at the baseline would waste a retrieval re-examining a capture already known to hold. That
+    reasoning does not survive contact with `check_commitment`'s own filter: `row[0] > cursor`
+    is a strict inequality, so a cursor sitting exactly on the baseline already excludes the
+    baseline's own row from ever being re-fetched. There was no retrieval being saved. What the
+    old cursor placement actually did was mark every real change point between the baseline and
+    the newest row the window happened to return as already-examined, none of which `create_bond`
+    had fetched, decoded, gated or judged. A page edited between its baseline capture and the
+    moment it was bonded would have every one of those edits silently skipped, permanently: the
+    very history a bond exists to catch. `bonds.place` stages a 200-row anchored window (measured
+    in `test_create_bond.py`'s own docstrings), so a cursor anywhere past the baseline in this
+    test's fixture would be a visible, non-vacuous instance of exactly that gap.
     """
     bond_id = bonds.place(contract, direct_vm, value_ledger)
     bond = contract.get_bond(bond_id)
-    assert re.fullmatch(r"[0-9]{14}", bond["cursor_timestamp"])
-    assert bond["cursor_timestamp"] > bonds.BASELINE_STAMP
+    assert bond["cursor_timestamp"] == bonds.BASELINE_STAMP
     assert bond["state"] == ST_ACTIVE
 
 

@@ -251,21 +251,22 @@ def test_the_two_addresses_come_back_as_checksummed_hex_and_not_as_a_repr(contra
         assert "Address(" not in value
 
 
-def test_a_new_bond_starts_active_with_one_examined_point_and_a_cursor_past_its_baseline(
+def test_a_new_bond_starts_active_with_one_examined_point_and_a_cursor_at_its_baseline(
         contract, bonded):
-    """The baseline counts as an examined change point, and the cursor moves past it.
+    """The baseline counts as an examined change point, and the cursor stays on it.
 
     Both halves are decisions rather than incidentals. Counting the baseline is what makes
     `checks_passed` and `points_recorded` start at 1 rather than 0, so a bond with no later capture
-    still shows the frame it was created from. Advancing the cursor is what stops the first check
-    from re-examining a capture already known to qualify and hold.
+    still shows the frame it was created from. Keeping the cursor at the baseline leaves every
+    later capture for the first real check to examine; the strict `row[0] > cursor` filter already
+    prevents the baseline itself from being fetched again.
     """
     bond = contract.get_bond(bonded)
     assert bond["state"] == ST_ACTIVE
     assert bond["checks_passed"] == "1"
     assert bond["points_recorded"] == "1"
     assert bond["last_checked_at"] == ""
-    assert bond["cursor_timestamp"] >= bond["baseline_timestamp"]
+    assert bond["cursor_timestamp"] == bond["baseline_timestamp"]
     assert bond["settled"] is False
     assert bond["paid_to_payee"] == "0"
     assert bond["returned_to_promisor"] == "0"

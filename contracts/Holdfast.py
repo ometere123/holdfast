@@ -2198,6 +2198,20 @@ class Holdfast(gl.Contract):
         NEWEST rows: a window starting before the pin spends its row budget on older captures and
         truncates before reaching it. Four of the five original fixtures in this project did not
         contain the timestamp their paired snapshot named, for exactly that reason.
+
+        DOES NOT RETURN A CURSOR, and that omission is the fix for a real defect. This block only
+        ever admits and judges row 0, the pin itself; every other row this query happens to pull
+        back (anything between the baseline and `to_date`) is fetched purely to count change
+        points for the `MIN_CHANGE_POINTS` floor and is never read. `next_cursor(index)` is the
+        newest row across the WHOLE window, and `_open_bond` used to write that into a freshly
+        created bond's cursor, on the reasoning that documented it as "everything up to here has
+        been examined." Nothing between the pin and that newest row had been examined at all: a
+        page edited three times between its baseline capture and the moment it was bonded would
+        have all three of those real changes marked already-seen before `check_commitment` ever
+        ran once. `_open_bond` now sets the cursor to `baseline` itself, the one row this method
+        actually reads, and leaves every later row in this same window for the first real check
+        to walk forward through, exactly as it would if create_bond had never looked ahead of the
+        pin at all.
         """
         def work():
             def ep_fetch(url, method="GET", headers=None, timeout=None):
@@ -2219,7 +2233,6 @@ class Holdfast(gl.Contract):
                 "saturated": bool(index.saturated),
                 "digest": str(row.digest),
                 "warc_length": -1 if row.warc_length is None else int(row.warc_length),
-                "cursor": str(next_cursor(index)),
             }
 
         # `strict_eq`, not a comparative prompt. Every field here is arithmetic over fetched
@@ -2675,10 +2688,14 @@ rationale: what specifically in the document supports that classification (max
             # future before any of this ran.
             expires_at=expires_at,
             state=ST_ACTIVE,
-            # The newest row of the baseline window, not the baseline itself. Everything up to
-            # here has been examined, and a cursor left behind at the baseline would re-examine
-            # captures already known to qualify and hold.
-            cursor_timestamp=str(index["cursor"]),
+            # The baseline itself, and only the baseline: it is the one row `_open_bond` actually
+            # fetched, decoded, gated and judged. An earlier version left the cursor at the
+            # newest row anywhere in the baseline query's window, which could be months of real
+            # history ahead of the pin, and every change point in that gap was marked
+            # already-examined without a single one of them having been read. Leaving the cursor
+            # here instead means the first real `check_commitment` walks forward from the
+            # baseline and is the one that actually looks at whatever happened since.
+            cursor_timestamp=baseline,
             last_checked_at="",
             checks_passed=u256(1),
             points_recorded=u256(1),
